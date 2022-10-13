@@ -7,8 +7,202 @@
 #include "data.h"
 #include "decl.h"
 
+struct MacroBuf {
+	char params[NAMELEN+1];
+	char args[TEXTLEN+1];
+};
+
+static struct MacroBuf Macexp[MAXFNARGS];
+
+static int append(int k, char *buf, char *s, int maxlen, int quote) {
+	int n;
+	char *p;
+	p = buf + k;
+	n = 0;
+	if (quote && n + k < maxlen) {
+		p[n] = '"'; n++;
+	}
+
+	while (n + k < maxlen - 1 && *s != '\0') {
+		if (quote) {
+			if (*s == '\\') {
+				p[n] = '\\'; n++;
+				p[n] = '\\'; n++;
+			} else if (*s == '"') {
+				p[n] = '\\'; n++;
+				p[n] = '"'; n++;
+			} else {
+				p[n] = *s;
+				n++;
+			}
+		} else {	
+				p[n] = *s;
+				n++;
+		}
+		s++;
+	}
+	if (quote && n + k < maxlen) {
+		p[n] = '"'; n++;
+	}
+	p[n] = '\0';
+	if (k + n >= maxlen) 
+		fatal("buffer overflow in macro expansion");
+	return k + n;
+}
+
+static int replace(int na, int k, char *buf, int maxlen) {
+	int i;
+	int q = 0;
+	char *tok;
+	tok = buf + k;
+	if (*tok == '#') {
+		tok++;
+		q = 1;
+	}
+	for (i = 0; i < na; i++) {
+		if (!strcmp(tok, Macexp[i].params)) {
+			buf[k] = '\0';
+			return append(k, buf, Macexp[i].args, maxlen, q);
+		}
+	}
+	return strlen(buf);
+}
+
+static char *expandbody(char *s, int na) {
+	static char buf[TEXTLEN+1];
+	int c, ni, i;
+
+	buf[0] = '\0';
+	ni = 0;
+	i = 0;
+	while (*s && i < TEXTLEN) {
+		if (*s == '"' || *s == '\'') {
+			c = *s;
+			if (ni < i) {
+				buf[i] = '\0';
+				i = replace(na, ni, buf, TEXTLEN);
+			}
+			ni = i + 1;	
+			buf[i] = *s;
+			s++; i++;
+			while (*s && *s != c && i < TEXTLEN) {
+				if (*s == '\\') {
+					buf[i] = *s;
+					s++; i++;
+				}
+				buf[i] = *s;
+				s++; i++;
+			}
+			if (*s == c && i < TEXTLEN) {
+				buf[i] = *s;
+				s++; i++;
+			}
+			ni = i;
+			continue;
+		}
+		if (s[0] == '#' && s[1] == '#') {
+			buf[i] = '\0';
+			i = replace(na, ni, buf, TEXTLEN);
+			ni = i;
+			s += 2;
+			continue;
+		}
+		if (!(isalpha(*s) || isdigit(*s) || '_' == *s)) {
+			buf[i] = '\0';
+			if (ni < i) {
+				i = replace(na, ni, buf, TEXTLEN);
+			}
+			if (*s == '#') 
+				ni = i;
+			else 	
+				ni = i + 1;
+		}
+		buf[i] = *s;
+		i++; s++;
+	}
+	buf[i] = '\0';
+	if (ni < i) {
+		replace(na, ni, buf, TEXTLEN);
+	}
+	/* printf("XPND: %s\n", buf); */
+	return buf;
+}
+
+static int getargs(void) {
+	int l, na, k;
+	Token = scanraw();
+	if (Token != LPAREN) fatal("missing '(' after macro name");
+	l = 1;
+	na = 0;
+	k = 0;
+	Macexp[na].args[k] = '\0';
+	while (l > 0  && Token != XEOF && na < MAXFNARGS - 1) {
+		Token = scanraw();
+		if (Token == RPAREN) l--;
+		if (Token == LPAREN) l++;
+		if (Token == COMMA && l == 1) {
+			na++;
+			k = 0;
+			Macexp[na].args[k] = '\0';
+		} else if (l > 0) {
+			k = append(k, Macexp[na].args, Text, TEXTLEN, 0);
+		} else {
+			if (k != 0) na++;
+		}
+	}
+	Macexp[na].args[k] = '\0';
+	if (l != 0) fatal("Missing ')' after macro call");
+	return na;
+}
+
+static int getparams(char **ps) {
+	int np, k;
+	char *s;
+	s = *ps;
+	np = 0;
+	k = 0;
+	Macexp[np].params[k] = '\0';
+	s++;
+	while ('\0' != *s && np < MAXFNARGS - 1) {
+		if (')' == *s) {
+			s++;
+			break;
+		}
+		if (',' == *s) {
+			np++;
+			k = 0;
+			Macexp[np].params[k] = '\0';
+		} else {
+			if (k >= NAMELEN) 
+				fatal("parameter name too long in macro");
+
+			if (!isspace(*s)) {
+				Macexp[np].params[k] = *s;
+				k++;
+				Macexp[np].params[k] = '\0';
+			}
+		}
+		s++;
+	}
+	if (k != 0) np++;
+	*ps = s;
+	return np;
+}
+
+static char *expandmac(char *s) {
+	int na, np;
+	na = getargs();
+	np = getparams(&s);
+	if (na != np) fatal("wrong number of arguments to macro");
+	return expandbody(s, na);
+}
+
 void playmac(char *s) {
 	if (Mp >= MAXNMAC) fatal("too many nested macros");
+	if ('(' == s[0]) { 
+		if (Mp > 0) fatal("too many nested function like macros");
+		s = expandmac(s);
+	}
 	Macc[Mp] = next();
 	Macp[Mp++] = s;
 }
@@ -27,19 +221,38 @@ static void defmac(void) {
 	char	name[NAMELEN+1];
 	char	buf[TEXTLEN+1], *p;
 	int	y;
+	int 	l;
 
 	Token = scanraw();
 	if (Token != IDENT)
 		error("identifier expected after '#define': %s", Text);
 	copyname(name, Text);
+	buf[0] = ' ';
+	buf[1] = 0;
+	if ('(' == Putback) {
+		putback(' ');
+		buf[0] = '(';
+	}
+	l = 0;
 	if ('\n' == Putback)
 		buf[0] = 0;
-	else
-		getln(buf, TEXTLEN-1);
-	for (p = buf; isspace(*p); p++)
-		;
+	else 
+		l = getln(buf+1, TEXTLEN-2)+1;
+
+	while (l > 0 && l < TEXTLEN-2 && buf[l-1] == '\\') {
+		l--;
+		buf[l] = 0;
+		Line++;
+		l += getln(buf+l, TEXTLEN-1-l);
+	}
+	p = buf;
+	if (' ' == *p) {
+		for (; isspace(*(p+1)); p++)
+			;
+	}
+		
 	if ((y = findmac(name)) != 0) {
-		if (strcmp(Mtext[y], buf))
+		if (strcmp(Mtext[y], buf)) // FIXME: should be p not buf???
 			error("macro redefinition: %s", name);
 	}
 	else {
@@ -66,6 +279,7 @@ static void include(void) {
 	FILE	*inc, *oinfile;
 	char	*ofile;
 	int	oc, oline;
+	char	*p;
 
 	if ((c = skip()) == '<')
 		c = '>';
@@ -74,9 +288,22 @@ static void include(void) {
 	if (!k || file[k-1] != c)
 		error("missing delimiter in '#include'", NULL);
 	if (k) file[k-1] = 0;
-	if (c == '"')
+	if (c == '"') {
 		strcpy(path, file);
-	else {
+		if ((inc = fopen(path, "r")) == NULL) {
+			strcpy(path, File);
+			p = path + strlen(path);
+			while (p > path) {
+				p--;
+				if (*p == '/') {
+					p[1] = '\0';
+					break;
+				}
+			}
+			strcat(path, file);
+		} else 
+			fclose(inc);
+	} else {
 		strcpy(path, SCCDIR);
 		strcat(path, "/include/");
 		strcat(path, file);

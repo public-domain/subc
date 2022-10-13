@@ -131,8 +131,7 @@ void genpostlude(void) {
 }
 
 void genname(char *name) {
-	genraw(gsym(name));
-	genraw(":");
+	cgname(gsym(name));
 }
 
 void genpublic(char *name) {
@@ -551,9 +550,9 @@ void gencalr(void) {
 	load();
 }
 
-void genentry(void) {
+void genentry(char *name) {
 	gentext();
-	cgentry();
+	cgentry(gsym(name));
 }
 
 void genexit(void) {

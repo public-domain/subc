@@ -245,7 +245,11 @@ void cginitlw(int v, int a)	{ ngen2("%s\t$%d,%d(%%rbp)", "movq", v, a); }
 void cgcall(char *s)	{ sgen("%s\t%s", "call", s); }
 void cgcalr(void)	{ gen("call\t*%rax"); }
 void cgstack(int n)	{ ngen("%s\t$%d,%%rsp", "addq", n); }
-void cgentry(void)	{ gen("pushq\t%rbp");
+void cgname(char *s)	{ genraw(s);
+			  genraw(":\n"); }
+void cgentry(char *s)	{ genraw(s);
+			  genraw(":\n");
+			  gen("pushq\t%rbp");
 			  gen("movq\t%rsp,%rbp"); }
 void cgexit(void)	{ gen("popq\t%rbp");
 			  gen("ret"); }

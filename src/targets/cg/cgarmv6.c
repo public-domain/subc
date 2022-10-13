@@ -186,7 +186,7 @@ void cgand(void)	{ cgload2(); gen("and\tr0,r0,r1"); }
 void cgior(void)	{ cgload2(); gen("orr\tr0,r0,r1"); }
 void cgxor(void)	{ cgload2(); gen("eor\tr0,r0,r1"); }
 void cgadd(void)	{ gen("add\tr0,r0,r1"); }
-void cgmul(void)	{ gen("mul\tr0,r0,r1"); }
+void cgmul(void)	{ gen("mul\tr0,r1,r0"); }
 void cgsub(void)	{ gen("sub\tr0,r0,r1"); }
 void cgdiv(void)	{ gen("bl\tsdiv"); }
 void cgmod(void)	{ gen("bl\tsrem"); }
@@ -248,9 +248,9 @@ void cgscale(void)	{ gen("lsl\tr0,#2"); }
 void cgscale2(void)	{ gen("lsl\tr1,#2"); }
 void cgunscale(void)	{ gen("lsr\tr0,#2"); }
 void cgscaleby(int v)	{ cglit2(v, 1);
-			  gen("mul\tr0,r0,r1"); }
+			  gen("mul\tr0,r1,r0"); }
 void cgscale2by(int v)	{ cglit2(v, 2);
-			  gen("mul\tr1,r1,r2"); }
+			  gen("mul\tr1,r2,r1"); }
 void cgunscaleby(int v)	{ cglit2(v, 1);
 			  gen("bl\tudiv"); }
 void cgbool(void)	{ gen("cmp\tr0,#0");
@@ -413,7 +413,11 @@ void cgcall(char *s)	{ sgen("%s\t%s", "bl", s); }
 void cgcalr(void)	{ gen("blx\tr0"); }
 void cgstack(int n)	{ cglit2(n, 1);
 			  gen("add\tsp,sp,r1"); }
-void cgentry(void)	{ gen("push\t{r11,lr}");
+void cgname(char *s)	{ genraw(s);
+			  genraw(":"); }
+void cgentry(char *s)	{ genraw(s);
+			  genraw(":\n");
+			  gen("push\t{r11,lr}");
 			  gen("mov\tr11,sp"); }
 void cgexit(void)	{ gen("pop\t{r11,pc}"); }
 

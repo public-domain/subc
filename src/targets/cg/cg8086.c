@@ -289,7 +289,11 @@ void cginitlw(int v, int a)	{ cglit(v);
 void cgcall(char *s)	{ sgen("%s\t%s", "call", s); }
 void cgcalr(void)	{ gen("call\tax"); }
 void cgstack(int n)	{ ngen("%s\tsp,%d", "add", n); }
-void cgentry(void)	{ gen("push\tbp");
+void cgname(char *s)	{ genraw(s);
+			  genraw(":\n"); }
+void cgentry(char *s)	{ genraw(s);
+			  genraw(":\n");
+			  gen("push\tbp");
 			  gen("mov\tbp,sp"); }
 void cgexit(void)	{ gen("pop\tbp");
 			  gen("ret"); }

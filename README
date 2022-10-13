@@ -35,7 +35,7 @@
 	following processors and operating systems:
 
 		FreeBSD		386*	armv6*	x86-64
-		Linux		386*	-	x86-64*
+		Linux		386*	armv6*	x86-64*
 		NetBSD		386*	-	x86-64*
 		OpenBSD		386%	-	-
 		Windows/MinGW	386*	-	-
@@ -128,6 +128,8 @@
 	   in constant expression contexts. For example, pointer
 	   variables can be initialized with NULL.
 
+	o  There are parameterized macros.
+
 
 	DIFFERENCES BETWEEN SUBC (THIS VERSION) AND FULL C89
 
@@ -170,8 +172,6 @@
 	o  Arguments of prototypes must be named.
 
 	o  There is no goto.
-
-	o  There are no parameterized macros.
 
 	o  The #if and #elif preprocessor commands are not recognized.
 

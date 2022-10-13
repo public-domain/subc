@@ -57,7 +57,7 @@ void	gendefp(int v);
 void	gendefs(char *s, int len);
 void	gendefw(int v);
 void	gendiv(int swap);
-void	genentry(void);
+void	genentry(char *name);
 void	genexit(void);
 void	geninc(int *lv, int inc, int pre);
 void	genind(int p);

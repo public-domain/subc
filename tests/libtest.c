@@ -22,6 +22,14 @@
 #define TMPFILE		"stdio.tmp"
 #define TMPFILE2	"stdio2.tmp"
 
+/* preprocessor tests */
+#define ATEXIT(a , b )	atexit(b)
+#define REMOVE(a,b)	{\
+				remove(a##b); \
+			} 
+
+#define PR(a)		pr(#a)
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -779,13 +787,13 @@ void doexit(void) {
 
 void test_atexit(void) {
 	pr("atexit");
-	atexit(doexit);
+	ATEXIT(ignored, doexit);
 	exit(0);
 }
 
 void test_exit(void) {
-	pr("exit");
-	remove(TMPFILE);
+	PR(exit);
+	REMOVE(TMP, FILE);
 #ifdef __dos
 	system(".\\libtest.exe test-atexit");
 #else

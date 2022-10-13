@@ -540,8 +540,7 @@ void decl(int clss, int prim, int utype) {
 				gentext();
 				if (CPUBLIC == clss) genpublic(name);
 				genaligntext();
-				genname(name);
-				genentry();
+				genentry(name);
 				genstack(lsize);
 				genlocinit();
 				Retlab = label();
