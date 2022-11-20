@@ -6,5 +6,14 @@
 #include <unistd.h>
 
 int remove(char *path) {
-	return _unlink(path);
+	int r;
+	r = _unlink(path);
+	if (r != 0) {
+		r = _rmdir(path);
+	}
+	return r;
+}
+
+int rmdir(char *path) {
+	return _rmdir(path);
 }

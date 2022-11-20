@@ -9,3 +9,7 @@
 int atoi(char *s) {
 	return strtol(s, NULL, 10);
 }
+
+int atol(char *s) {
+	return atoi(s);
+}

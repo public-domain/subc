@@ -252,7 +252,7 @@ static void defmac(void) {
 	}
 		
 	if ((y = findmac(name)) != 0) {
-		if (strcmp(Mtext[y], buf)) // FIXME: should be p not buf???
+		if (strcmp(Mtext[y], buf)) /* FIXME: should be p not buf??? */
 			error("macro redefinition: %s", name);
 	}
 	else {

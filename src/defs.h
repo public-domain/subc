@@ -29,21 +29,21 @@
 #define PTRSIZE		INTSIZE
 #define CHARSIZE	1
 
-#define TEXTLEN		512
-#define NAMELEN		16
+#define TEXTLEN		2048
+#define NAMELEN		64
 
 #define MAXFILES	32
 
 #define MAXIFDEF	16
-#define MAXNMAC		32
+#define MAXNMAC		2048
 #define MAXCASE		256
 #define MAXBREAK	16
 #define MAXLOCINIT	32
 #define MAXFNARGS	32
 
 /* assert(NSYMBOLS < PSTRUCT) */
-#define NSYMBOLS	1024
-#define POOLSIZE	16384
+#define NSYMBOLS	16384
+#define POOLSIZE	262144
 #define NODEPOOLSZ	4096	/* ints */
 
 /* types */

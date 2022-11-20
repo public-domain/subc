@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define THRESHOLD	128
-#define OVERALLOC	10
+#define THRESHOLD	1024
+#define OVERALLOC	32
 
 int		*_arena = 0;
 int		_asize;
@@ -19,7 +19,7 @@ static void defrag(void) {
 	int	*p, *q, *end;
 
 	end = _arena + _asize;
-	for (p = _arena; p < end; p += abs(*p)) {
+	for (p = _arena; p < end; p += ((*p < 0) ? -*p : *p)) {
 		if (*p > 0) {
 			for (q = p + *p; q < end && *q > 0; q += *q)
 				;
@@ -62,7 +62,11 @@ void *malloc(int size) {
 				freep = p;
 				return p+1;
 			}
-			p += abs(*p);
+			if (*p < 0) {
+				p -= *p;
+			} else {
+				p += *p;
+			}
 			if (p == end) p = _arena;
 			if (p < _arena || p >= end || 0 == *p) {
 				_write(2, "malloc(): corrupt arena\n", 24);
@@ -73,12 +77,13 @@ void *malloc(int size) {
 			defrag();
 		}
 		else {
-			if (size >= THRESHOLD)
-				n = size + 1;
-			else
-				n = size * OVERALLOC;
+			n = _asize; /* double the amout of memory */
+			while (n <= size) {
+				n += _asize;
+			}
 			if (_sbrk(n * sizeof(int)) == (void *)-1) {
 				errno = ENOMEM;
+				_write(2, "malloc(): _sbrk failed\n", 23);
 				return NULL;
 			}
 			k = _asize;
@@ -87,5 +92,6 @@ void *malloc(int size) {
 		}
 	}
 	errno = ENOMEM;
+	_write(2, "malloc(): no memory\n", 20);
 	return NULL;
 }

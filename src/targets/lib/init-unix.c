@@ -4,11 +4,13 @@
  */
 
 #include <stdio.h>
+#include <dirent.h>
 #include <errno.h>
 
 int	errno = EOK;
 
 FILE	*_files[FOPEN_MAX];
+DIR	*_dirs[OPENDIR_MAX];
 
 FILE	*stdin, *stdout, *stderr;
 
@@ -34,6 +36,8 @@ void _init(void) {
 
 	for (i=0; i<FOPEN_MAX; i++)
 		_files[i] = NULL;
+	for (i=0; i<OPENDIR_MAX; i++)
+		_dirs[i] = NULL;
 	stdin = fdopen(0, "r");
 	stdout = fdopen(1, "w");
 	stderr = fdopen(2, "w");

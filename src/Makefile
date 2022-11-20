@@ -11,7 +11,7 @@ SRC=	cg.c decl.c error.c expr.c gen.c main.c misc.c \
 
 HDRS=	cgen.h data.h decl.h defs.h prec.h sys.h
 
-LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/atexit.o lib/atoi.o \
+LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/access.o lib/atexit.o lib/atoi.o \
 	lib/bsearch.o lib/calloc.o lib/clearerr.o lib/ctime.o \
 	lib/ctype.o lib/difftime.o lib/exit.o lib/fclose.o \
 	lib/fdopen.o lib/feof.o lib/ferror.o lib/fflush.o lib/fgetc.o \
@@ -20,16 +20,17 @@ LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/atexit.o lib/atoi.o \
 	lib/freopen.o lib/fscanf.o lib/fseek.o lib/fsetpos.o \
 	lib/ftell.o lib/fwrite.o lib/getchar.o lib/getenv.o \
 	lib/kprintf.o lib/malloc.o lib/memchr.o lib/memcmp.o \
-	lib/memcpy.o lib/memmove.o lib/memset.o lib/perror.o \
+	lib/memcpy.o lib/memmove.o lib/memset.o lib/mkdir.o \
+	lib/opendir.o lib/perror.o \
 	lib/printf.o lib/putchar.o lib/puts.o lib/qsort.o lib/rand.o \
 	lib/realloc.o lib/remove.o lib/rename.o lib/rewind.o \
 	lib/scanf.o lib/setbuf.o lib/setvbuf.o lib/sprintf.o \
-	lib/sscanf.o lib/strcat.o lib/strchr.o lib/strcmp.o \
+	lib/sscanf.o lib/stat.o lib/strcat.o lib/strchr.o lib/strcmp.o \
 	lib/strcpy.o lib/strcspn.o lib/strdup.o lib/strerror.o \
 	lib/strlen.o lib/strncat.o lib/strncmp.o lib/strncpy.o \
-	lib/strpbrk.o lib/strrchr.o lib/strspn.o lib/strtok.o \
+	lib/strpbrk.o lib/strrchr.o lib/strspn.o lib/strstr.o lib/strtok.o \
 	lib/strtol.o lib/system.o lib/time.o lib/tmpfile.o \
-	lib/tmpnam.o lib/ungetc.o lib/varargs.o lib/vformat.o \
+	lib/tmpnam.o lib/truncate.o lib/ungetc.o lib/varargs.o lib/vformat.o \
 	lib/vfprintf.o lib/vprintf.o lib/vscan.o lib/vsprintf.o
 
 AS=	as
@@ -99,7 +100,8 @@ ptest:	scc0 lib/crt0.o lib/libscc.a ../tests/ptest.src ../tests/ptest.awk
 
 systest:	scc0 lib/crt0.o lib/libscc.a ../tests/systest.c
 	./scc0 -o ../tests/systest ../tests/systest.c
-	 (cd ../tests && ./systest)
+	(cd ../tests && ./systest)
+	sleep 1
 	rm ../tests/systest
 
 libtest:	scc0 lib/crt0.o lib/libscc.a ../tests/libtest.c
@@ -130,7 +132,7 @@ install:	all
 	./scc0 -o scc -D 'SCCDIR="$(SCCDIR)"' $(SRC)
 	cp scc $(BINDIR)/scc$(EXESFX)
 	strip $(BINDIR)/scc$(EXESFX)
-	cp include/* $(SCCDIR)/include
+	cp -r include/* $(SCCDIR)/include
 	cp lib/libscc.a lib/crt0.o lib/ncrt0.o $(SCCDIR)/lib
 
 install-scc86:	all

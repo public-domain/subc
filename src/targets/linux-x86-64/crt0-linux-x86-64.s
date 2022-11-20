@@ -131,6 +131,22 @@ sbrkok:
 	movq	%rbx,%rax
 	ret
 
+# int _strlen(char *buf);
+# http://www.int80h.org/strlen/
+	.globl	C_strlen
+C_strlen:
+	movq	8(%rsp),%rdi	# buf
+	xorq	%rax,%rax
+	xorq	%rcx,%rcx
+	notq	%rcx
+	cld
+	repne 	scasb
+	notq	%rcx
+	decq	%rcx
+	movq	%rcx, %rax
+	ret
+
+
 # int _write(int fd, void *buf, int len);
 
 	.globl	C_write
@@ -164,6 +180,18 @@ C_lseek:
 	syscall
 	ret
 
+# int _getdents(int fd, struct linux_dirent *dirent, int count);
+
+	.globl	C_getdents
+C_getdents:
+	movq	24(%rsp),%rdx	# count
+	movq	16(%rsp),%rsi	# dirent
+	movq	8(%rsp),%rdi	# fd
+	movq	$78,%rax
+	syscall
+	ret
+
+
 # int _creat(char *path, int mode);
 
 	.globl	C_creat
@@ -173,6 +201,55 @@ C_creat:
 	movq	$85,%rax
 	syscall
 	ret
+
+# int _stat(char *path, struct stat *buf);
+
+	.globl	C_stat
+C_stat:
+	movq	16(%rsp),%rsi	# statbuf
+	movq	8(%rsp),%rdi	# path
+	movq	$4,%rax
+	syscall
+	ret
+
+# int _access(char *path, int mode);
+
+	.globl	C_access
+C_access:
+	movq	16(%rsp),%rsi	# mode
+	movq	8(%rsp),%rdi	# path
+	movq	$21,%rax
+	syscall
+	ret
+
+# int _truncate(char *path, int size);
+
+	.globl	C_truncate
+C_truncate:
+	movq	16(%rsp),%rsi	# size
+	movq	8(%rsp),%rdi	# path
+	movq	$76,%rax
+	syscall
+	ret
+
+# int _mkdir(char *path, int mode);
+
+	.globl	C_mkdir
+C_mkdir:
+	movq	16(%rsp),%rsi	# mode
+	movq	8(%rsp),%rdi	# path
+	movq	$83,%rax
+	syscall
+	ret
+
+# int _rmdir(char *path);
+	.globl	C_rmdir
+C_rmdir:
+	movq	8(%rsp),%rdi	# path
+	movq	$84,%rax
+	syscall
+	ret
+
 
 # int _open(char *path, int flags);
 

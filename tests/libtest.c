@@ -36,7 +36,9 @@
 #include <ctype.h>
 #include <setjmp.h>
 #include <errno.h>
+#include <dirent.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 int	Verbose = 0;
 int	Errors = 0;
@@ -314,6 +316,11 @@ void test_str(void) {
 	if (strcmp(v1, "0123456789")) fail("strncat-1");
 	strncat(v1, "abcdef0000", 6);
 	if (strcmp(v1, "0123456789abcdef")) fail("strncat-2");
+
+	pr("strstr");
+	if (strcmp(strstr("abcdefg", "def"), "defg")) fail("strstr-1");
+	if (strcmp(strstr("abcdefgdefk", "def"), "defgdefk")) fail("strstr-2");
+	if (strstr("abcdefg", "xyz") != NULL) fail("strstr-3");
 
 	pr("strspn");
 	if (strspn("abcdefg", "abc") != 3) fail("strspn-1");
@@ -781,6 +788,51 @@ void test_file(void) {
 	remove(tn1);
 }
 
+void test_dir(void) {
+	DIR	*d;
+	struct dirent *ent;
+	int l;
+	struct stat statbuf;
+
+	pr("mkdir");
+	mkdir(TMPFILE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+	fclose(fopen(TMPFILE "/txt", "w"));
+	if (remove(TMPFILE) >= 0) fail("removedir-1");
+	if (remove(TMPFILE "/txt") < 0) fail("removedir-2");
+
+	pr("remove");
+	if (remove(TMPFILE) < 0) fail("removedir-3");
+	if (remove(TMPFILE) >= 0) fail("removedir-4");
+
+	pr("rename");
+	if (rename(TMPFILE, TMPFILE2) >= 0) fail("renamedir-1");
+	mkdir(TMPFILE, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if (rename(TMPFILE, TMPFILE2) < 0) fail("renamedir-2");
+	if (rename(TMPFILE, TMPFILE2) >= 0) fail("renamedir-3");
+	remove(TMPFILE2);
+
+	pr("opendir");
+	d = opendir(".");
+	if (d == NULL) fail("opendir-1");
+	ent = readdir(d);
+	if (ent == NULL) fail("readdir-1");
+	while (ent) {
+		printf("\t%s%c\n", ent->d_name, 
+			(ent->d_type == DT_DIR) ? '/': ' ');
+		ent = readdir(d);
+	}
+	pr("closdir");
+	if (closedir(d)) fail("closedir-1");
+	
+	pr("stat");
+	if(stat(".", &statbuf)) fail("stat-1");
+	printf(".      %o %d\n", statbuf.st_mode, statbuf.st_size);
+	if(stat("libtest", &statbuf)) fail("stat-2");
+	printf("libtest %o %d\n", statbuf.st_mode, statbuf.st_size);
+}
+
+
 void doexit(void) {
 	fclose(fopen(TMPFILE, "w"));
 }
@@ -806,6 +858,13 @@ void test_exit(void) {
 	fail("exit-1");
 }
 
+void test_time()
+{
+	int t;
+	t = time(NULL);
+	printf("Now: %s\n", ctime(&t));
+}
+
 int main(int argc, char **argv) {
 	if (argc > 1) {
 		if (!strcmp(argv[1], "v")) {
@@ -827,6 +886,8 @@ int main(int argc, char **argv) {
 	test_proc();
 	test_stdio();
 	test_file();
+	test_dir();
+	test_time();
 	test_exit();
 	return EXIT_FAILURE;
 }

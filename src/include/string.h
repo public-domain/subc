@@ -25,4 +25,5 @@ char	*strncpy(char *dest, char *src, int len);
 char	*strpbrk(char *s, char *set);
 char	*strrchr(char *s, int c);
 int	 strspn(char *s, char *set);
+char	*strstr(char *s, char *neddle);
 char	*strtok(char *s, char *sep);
