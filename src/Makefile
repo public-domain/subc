@@ -33,7 +33,8 @@ LIBOBJS=lib/init.o lib/abort.o lib/abs.o lib/access.o lib/atexit.o lib/atoi.o \
 	lib/tmpnam.o lib/truncate.o lib/ungetc.o lib/varargs.o lib/vformat.o \
 	lib/vfprintf.o lib/vprintf.o lib/vscan.o lib/vsprintf.o
 
-AS=	as
+# FIXME 32 bit
+AS=	as --32
 AR=	ar -rc
 RANLIB=	ranlib
 

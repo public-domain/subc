@@ -18,6 +18,12 @@
 #define TESTFILE	"___test.___"
 #define TESTFILE2	"___test2.___"
 
+typedef struct {
+	char s[1];
+	char c[1];
+	int i;
+} Typetest;
+
 int	verbose = 0;
 
 void error(char *s) {
@@ -31,6 +37,10 @@ int main(int argc, char **argv) {
 	char	buf[256];
 	int	p[4];
 	char	*a[4], *e[2];
+	Typetest t;
+
+	t.c[0] = 0;
+	printf("sizeof typedef: %d\n", sizeof(t));
 
 	if (argc > 1) {
 		switch (argv[1][0]) {

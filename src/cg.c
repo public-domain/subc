@@ -1,1 +1,1 @@
-targets/cg/cgx86-64.c
+targets/cg/cg386.c

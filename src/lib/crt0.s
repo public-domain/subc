@@ -1,1 +1,1 @@
-../targets/linux-x86-64/crt0-linux-x86-64.s
+../targets/linux-386/crt0-linux-386.s

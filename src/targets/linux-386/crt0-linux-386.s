@@ -182,6 +182,16 @@ C_close:
 	int	$0x80
 	ret
 
+# int _rmdir(char *path);
+# FIXME
+	.globl	C_rmdir
+C_rmdir:
+	movl	4(%esp),%ebx	# path
+	movl	$10,%eax
+#	int	$0x80
+	ret
+
+
 # int _unlink(char *path);
 
 	.globl	C_unlink
