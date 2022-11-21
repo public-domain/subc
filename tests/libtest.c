@@ -822,14 +822,14 @@ void test_dir(void) {
 			(ent->d_type == DT_DIR) ? '/': ' ');
 		ent = readdir(d);
 	}
-	pr("closdir");
+	pr("closedir");
 	if (closedir(d)) fail("closedir-1");
 	
 	pr("stat");
 	if(stat(".", &statbuf)) fail("stat-1");
 	printf(".      %o %d\n", statbuf.st_mode, statbuf.st_size);
-	if(stat("libtest", &statbuf)) fail("stat-2");
-	printf("libtest %o %d\n", statbuf.st_mode, statbuf.st_size);
+	if(stat("libtest.c", &statbuf)) fail("stat-2");
+	printf("libtest.c mode: %o  size: %d\n", statbuf.st_mode, statbuf.st_size);
 }
 
 

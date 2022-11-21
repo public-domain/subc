@@ -181,14 +181,77 @@ C_close:
 	movl	$6,%eax
 	int	$0x80
 	ret
+# int _truncate(char *path, int size);
+
+        .globl  C_truncate
+C_truncate:
+	movl	8(%esp),%ecx	# size
+	movl	4(%esp),%ebx	# path
+	movl	$92,%eax
+	int	$0x80
+	ret
+
+# int _getdents(int fd, struct linux_dirent *dirent, int count);
+
+        .globl  C_getdents
+C_getdents:
+	movl	12(%esp),%edx	# count
+	movl	8(%esp),%ecx	# dirent
+	movl	4(%esp),%ebx	# fd
+	movl	$141,%eax
+	int	$0x80
+	ret
+
+# int _strlen(char *buf)
+	.globl C_strlen
+C_strlen:
+	movl	4(%esp),%edi	# path
+	xorl	%eax,%eax
+	xorl	%ecx,%ecx
+	notl	%ecx
+	cld
+	repne	scasb
+	notl	%ecx
+	decl	%ecx
+	movl	%ecx,%eax
+	ret
+
+# int _stat(char *path, struct kstat *buf);
+
+        .globl  C_stat
+C_stat:
+	movl	8(%esp),%ecx	# buf
+	movl	4(%esp),%ebx	# path
+	movl	$106,%eax
+	int	$0x80
+	ret
+
+# int _access(char *path, int mode);
+
+        .globl  C_access
+C_access:
+	movl	8(%esp),%ecx	# mode
+	movl	4(%esp),%ebx	# path
+	movl	$33,%eax
+	int	$0x80
+	ret
+
+# int _mkdir(char *path, int mode);
+
+        .globl  C_mkdir
+C_mkdir:
+	movl	8(%esp),%ecx	# mode
+	movl	4(%esp),%ebx	# path
+	movl	$39,%eax
+	int	$0x80
+	ret
 
 # int _rmdir(char *path);
-# FIXME
 	.globl	C_rmdir
 C_rmdir:
 	movl	4(%esp),%ebx	# path
-	movl	$10,%eax
-#	int	$0x80
+	movl	$40,%eax
+	int	$0x80
 	ret
 
 

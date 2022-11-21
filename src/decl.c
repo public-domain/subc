@@ -594,7 +594,7 @@ void decl(int clss, int prim, int utype) {
 void structdecl(int clss, int uniondecl) {
 	int	utype, base, prim, size, dummy, type, addr = 0;
 	char	name[NAMELEN+1], sname[NAMELEN+1];
-	int	y, usize = 0;
+	int	align, maxalign, prvalign, y, usize = 0;
 
 	Token = scan();
 	if (IDENT == Token) {
@@ -613,6 +613,8 @@ void structdecl(int clss, int uniondecl) {
 			CMEMBER, 0, 0, NULL, 0);
 	Token = scan();
 	utype = 0;
+	align = 0;
+	maxalign = 1;
 	while (	INT == Token || CHAR == Token || VOID == Token ||
 		STRUCT == Token || UNION == Token ||
 		(IDENT == Token && (utype = usertype(Text)) != 0)
@@ -625,9 +627,26 @@ void structdecl(int clss, int uniondecl) {
 			prim = base;
 			type = declarator(1, CMEMBER, name, &prim, &size,
 						&dummy, &dummy);
+			prvalign = align;
+			align = size;
+			size = objsize(prim, type, size);
+			if (align > 1) {
+				/* for arrays */
+				align = size / align;
+			} else {
+				align = size;
+			}
+			/* if current primitive size is bigger
+			 * than the previous primitive size then align the
+			 * address*/
+			if (prvalign > 0 && align >= prvalign) {
+				addr = (addr + align-1) / align * align;
+			}
+			if (align > maxalign) {
+				maxalign = align;
+			}
 			addglob(name, prim, type, CMEMBER, size, addr,
 				NULL, 0);
-			size = objsize(prim, type, size);
 			if (size < 1)
 				error("size of struct/union member"
 					" is unknown: %s",
@@ -637,7 +656,6 @@ void structdecl(int clss, int uniondecl) {
 			}
 			else {
 				addr += size;
-				addr = (addr + INTSIZE-1) / INTSIZE * INTSIZE;
 			}
 			if (Token != COMMA) break;
 			Token = scan();
@@ -646,6 +664,11 @@ void structdecl(int clss, int uniondecl) {
 		utype = 0;
 	}
 	rbrace();
+	if (!uniondecl) {
+		/* the total size of the structure should be a multiple 
+		 * of the largest alignment of any structure member */
+		addr = (addr + maxalign-1) / maxalign * maxalign;
+	}
 	Sizes[y] = uniondecl? usize: addr;
 	if (Token != SEMI)
 		decl(clss, Prims[y] | y, y);

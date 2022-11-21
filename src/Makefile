@@ -38,7 +38,11 @@ AS=	as --32
 AR=	ar -rc
 RANLIB=	ranlib
 
-all:	scc0 crt0 ncrt0 lib
+all:	scc0 crt0 ncrt0 lib t
+	
+t: scc0 lib
+	./scc0 -o t.exe t.c
+	./t.exe
 
 scc:	scc1 $(SRC)
 	./scc1 -o scc $(SRC)
