@@ -1,4 +1,14 @@
 
+#include <stdio.h>
+
+//#if defined __SCC__ \
+//	&& defined(__gnu_linux__)
+//#define YO
+#if 5 == 5 || 7 > 8
+static int ioii = 9;
+#endif
+
+
 typedef struct s {
 	char s;
 } s;

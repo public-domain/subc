@@ -8,6 +8,8 @@
 #include "decl.h"
 
 void init(void) {
+	char *defines;
+
 	Line = 1;
 	Putback = '\n';
 	Rejected = -1;
@@ -29,10 +31,11 @@ void init(void) {
 	Q_bool = bnone;
 	addglob("", 0, 0, 0, 0, 0, NULL, 0);
 	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
-	if (!strcmp(OS, "DOS"))
-		addglob("__dos", 0, TMACRO, 0, 0, 0, globname(""), 0);
-	else
-		addglob("__unix", 0, TMACRO, 0, 0, 0, globname(""), 0);
+	defines = DEFINES;
+	while (defines[0]) {
+		addglob(defines, 0, TMACRO, 0, 0, 0, globname(""), 0);
+		defines += strlen(defines) + 1;
+	}
 	Infile = stdin;
 	File = "(stdin)";
 	Basefile = NULL;

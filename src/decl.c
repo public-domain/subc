@@ -594,7 +594,7 @@ void decl(int clss, int prim, int utype) {
 void structdecl(int clss, int uniondecl) {
 	int	utype, base, prim, size, dummy, type, addr = 0;
 	char	name[NAMELEN+1], sname[NAMELEN+1];
-	int	align, maxalign, prvalign, y, usize = 0;
+	int	align, maxalign, y, usize = 0;
 
 	Token = scan();
 	if (IDENT == Token) {
@@ -627,7 +627,6 @@ void structdecl(int clss, int uniondecl) {
 			prim = base;
 			type = declarator(1, CMEMBER, name, &prim, &size,
 						&dummy, &dummy);
-			prvalign = align;
 			align = size;
 			size = objsize(prim, type, size);
 			if (align > 1) {
@@ -636,10 +635,7 @@ void structdecl(int clss, int uniondecl) {
 			} else {
 				align = size;
 			}
-			/* if current primitive size is bigger
-			 * than the previous primitive size then align the
-			 * address*/
-			if (prvalign > 0 && align >= prvalign) {
+			if (align > 1) {
 				addr = (addr + align-1) / align * align;
 			}
 			if (align > maxalign) {

@@ -6,6 +6,7 @@
 #include "defs.h"
 #include "data.h"
 #include "decl.h"
+#include "prec.h"
 
 struct MacroBuf {
 	char params[NAMELEN+1];
@@ -13,6 +14,8 @@ struct MacroBuf {
 };
 
 static struct MacroBuf Macexp[MAXFNARGS];
+
+static int p_primary();
 
 static int append(int k, char *buf, char *s, int maxlen, int quote) {
 	int n;
@@ -349,6 +352,176 @@ static void ifdef(int expect) {
 		Ifdefstk[Isp++] = P_IFNDEF;
 }
 
+static int p_opprec(int tok)
+{
+	switch (tok) {
+	case LOGOR:
+		return 5;
+	case LOGAND:
+		return 6;
+	case EQUAL:
+	case NOTEQ:
+		return 10;
+	case GREATER:
+	case GTEQ:
+	case LESS:
+	case LTEQ:
+		return 11;
+	}
+	return -1;
+}
+
+static int p_rightass(int tok)
+{
+	switch (tok) {
+	case NOTEQ:
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * https://en.wikipedia.org/wiki/Operator-precedence_parser
+ */
+static int p_exprlist(int lhs, int minprec)
+{
+	int op, rhs, opprec;
+	while (p_opprec(Token) >= minprec) {
+		op = Token;
+		opprec = p_opprec(Token);
+		Token = scanraw();
+		rhs = p_primary();
+		while (p_opprec(Token) > opprec ||
+				(p_opprec(Token) == opprec && 
+				  p_rightass(Token))) 
+		{
+			rhs = p_exprlist(rhs, opprec + 
+				((p_opprec(Token) > opprec) ? 1 : 0));
+		}
+		switch (op) {
+		case LOGOR: lhs = lhs || rhs; break;
+		case LOGAND: lhs = lhs && rhs; break;
+		case EQUAL: lhs = lhs == rhs; break;
+		case NOTEQ: lhs = lhs != rhs; break;
+		case GREATER: lhs = lhs > rhs; break;
+		case GTEQ: lhs = lhs >= rhs; break;
+		case LESS: lhs = lhs < rhs; break;
+		case LTEQ: lhs = lhs <= rhs; break;
+		default:
+			error("'#if' unknown '%s'", Text);
+		}
+	}
+	return lhs;
+}
+
+static int p_primary()
+{
+	int r;
+	int y;
+	r = 0;
+	switch (Token) {
+	case XMARK:
+		Token = scanraw();
+		return !p_primary();
+	case LPAREN:
+		Token = scanraw();
+		r = p_exprlist(p_primary(), 0);
+		if (Token != RPAREN) {
+			error("'#if defined' missing ')'...", NULL);
+			return 0;
+		}
+		Token = scanraw();
+		return r;
+	case INTLIT:
+		r = Value;
+		Token = scanraw();
+		return r;
+	case IDENT:
+		if (!strcmp("defined", Text)){
+			Token = scanraw();
+			if (Token == IDENT) {
+				if (findmac(Text) != 0) {
+					Token = scanraw();
+					return 1;
+				}
+				Token = scanraw();
+				return 0;
+			}
+			if (Token == LPAREN) {
+				Token = scanraw();
+				if (Token == IDENT) {
+
+					if (findmac(Text) != 0) {
+						r = 1;
+					}
+					Token = scanraw();
+					if (Token == RPAREN) {
+						Token = scanraw();
+						return r;
+					}
+					error("'#if defined' "
+							"missing ')'", NULL);
+				}
+			} 
+			error("'#if defined' macro name missing", NULL);
+		} else {
+			if ((y = findmac(Text)) != 0) {
+				Token = scanraw();
+				return atol(Mtext[y]);
+			} else {
+				Token = scanraw();
+				return 0;
+			}
+		}
+		break;
+	case XEOF:
+	case XEOL:
+		error("'#if' expression is incomplete", NULL);
+		return 0;
+	default:
+		error("'#if' unknown '%s'", Text);		
+		Token = scanraw();
+		return 0;
+	}	
+	return r;
+}
+
+static int p_expr()
+{
+	Token = scanraw();
+	return p_exprlist(p_primary(), 0);
+}
+
+static void p_if(int incstk) {
+	int 	k, l;
+	if (incstk) {
+		if (Isp >= MAXIFDEF)
+			fatal("too many nested '#if's");
+		Ifdefstk[Isp++] = P_IFNDEF;
+	}
+	if (frozen(2))
+		Ifdefstk[Isp-1] = P_ELIFNOT;
+	else if (p_expr()) 
+		Ifdefstk[Isp-1] = P_IFDEF;
+	else
+		Ifdefstk[Isp-1] = P_IFNDEF;
+}
+
+static void p_elif(void) {
+	if (!Isp)
+		error("'#elif' without matching '#if'", NULL);
+	else if (frozen(2))
+		;
+	else if (P_IFDEF == Ifdefstk[Isp-1])
+		Ifdefstk[Isp-1] = P_ELIFNOT;
+	else if (P_IFNDEF == Ifdefstk[Isp-1])
+		p_if(0);
+	else if (P_ELIFNOT == Ifdefstk[Isp-1])
+		;
+	else
+		error("'#elif' without matching '#if'...", NULL);
+}
+
 static void p_else(void) {
 	if (!Isp)
 		error("'#else' without matching '#ifdef'", NULL);
@@ -358,14 +531,16 @@ static void p_else(void) {
 		Ifdefstk[Isp-1] = P_ELSENOT;
 	else if (P_IFNDEF == Ifdefstk[Isp-1])
 		Ifdefstk[Isp-1] = P_ELSE;
+	else if (P_ELIFNOT == Ifdefstk[Isp-1])
+		;
 	else
-		error("'#else' without matching '#ifdef'", NULL);
+		error("'#else' without matching '#ifdef'...", NULL);
 		
 }
 
 static void endif(void) {
 	if (!Isp)
-		error("'#endif' without matching '#ifdef'", NULL);
+		error("'#endif' without matching '#if'", NULL);
 	else
 		Isp--;
 }
@@ -409,7 +584,8 @@ static void junkln(void) {
 int frozen(int depth) {
 	return Isp >= depth &&
 		(P_IFNDEF == Ifdefstk[Isp-depth] ||
-		P_ELSENOT == Ifdefstk[Isp-depth]);
+		P_ELSENOT == Ifdefstk[Isp-depth] ||
+		P_ELIFNOT == Ifdefstk[Isp-depth]);
 }
 
 void preproc(void) {
@@ -417,7 +593,8 @@ void preproc(void) {
 	Token = scanraw();
 	if (	frozen(1) &&
 		P_IFDEF != Token && P_IFNDEF != Token &&
-		P_ELSE != Token && P_ENDIF != Token
+		P_ELSE != Token && P_ENDIF != Token &&
+		P_IF != Token && P_ELIF != Token
 	) {
 		junkln();
 		return;
@@ -430,6 +607,8 @@ void preproc(void) {
 	case P_IFNDEF:	ifdef(0); break;
 	case P_ELSE:	p_else(); break;
 	case P_ENDIF:	endif(); break;
+	case P_IF:	p_if(1); break;
+	case P_ELIF:	p_elif(); break;
 	case P_ERROR:	pperror(); break;
 	case P_LINE:	setline(); break;
 	case P_PRAGMA:	junkln(); break;

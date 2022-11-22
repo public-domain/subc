@@ -149,10 +149,11 @@ static int scanident(int c, char *buf, int lim) {
 }
 
 int skip(void) {
-	int	c, p, nl;
+	int	c, p, nl, skipnl;
 
 	c = next();
 	nl = 0;
+	skipnl = 0;
 	for (;;) {
 		if (EOF == c) {
 			strcpy(Text, "<EOF>");
@@ -161,9 +162,29 @@ int skip(void) {
 		while (' ' == c || '\t' == c || '\n' == c ||
 			'\r' == c || '\f' == c
 		) {
-			if ('\n' == c) nl = 1;
+			if ('\n' == c) {
+				if (skipnl) {
+					skipnl = 0;
+				} else {
+					if (!Expandmac) {
+						return  ' ';	
+					}
+				}
+				nl = 1;
+			}
 			c = next();
 		}
+		if ('\\' == c) {
+			c = next();
+			if (c == '\n' || c == '\r') { 
+				skipnl = 1;
+				continue;
+			} else {
+				putback(c);
+				c = '\\';
+			}
+		}
+
 		if (nl && c == '#') {
 			preproc();
 			c = next();
@@ -206,11 +227,13 @@ static int keyword(char *s) {
 			break;
 		case 'e':
 			if (!strcmp(s, "#else")) return P_ELSE;
+			if (!strcmp(s, "#elif")) return P_ELIF;
 			if (!strcmp(s, "#endif")) return P_ENDIF;
 			if (!strcmp(s, "#error")) return P_ERROR;
 			break;
 		case 'i':
 			if (!strcmp(s, "#ifdef")) return P_IFDEF;
+			if (!strcmp(s, "#if")) return P_IF;
 			if (!strcmp(s, "#ifndef")) return P_IFNDEF;
 			if (!strcmp(s, "#include")) return P_INCLUDE;
 			break;
@@ -510,6 +533,8 @@ static int scanpp(void) {
 			}
 			putback(c);
 			return DOT;
+		case ' ':
+			return XEOL;
 		default:
 			if (isdigit(c)) {
 				Value = scanint(c);
