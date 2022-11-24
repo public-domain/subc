@@ -63,6 +63,9 @@ int main(int argc, char **argv) {
 	u--;
 	if (u < 0) {
 		error("Unsigned < 0!");
+	} else {
+		printf("SIZEOF char %d short %d int %d long %d\n",
+			sizeof(char), sizeof(short), sizeof(int), sizeof(long));
 	}
 	if (verbose) kprintf(1, "sbrk\n");
 	n = _sbrk(1024);

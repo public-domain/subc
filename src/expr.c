@@ -369,10 +369,12 @@ static node *prefix(int *lv);
 
 static node *comp_size(void) {
 	int	utype, k = 0, y, lv[LV];
+	int	noscan = 0;
 
 	utype = 0;
 	if (	CHAR == Token || INT == Token || VOID == Token ||
-		UNSIGNED == Token ||
+		UNSIGNED == Token || SIGNED == Token ||
+		SHORT == Token || LONG == Token ||
 		STRUCT == Token || UNION == Token ||
                 (IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
@@ -380,17 +382,26 @@ static node *comp_size(void) {
 			k = objsize(Prims[utype], Types[utype], Sizes[utype]);
 		}
 		else {
+			if (SIGNED == Token || UNSIGNED == Token) {
+				Token = scan();
+				k = INTSIZE;
+				noscan = 1;
+			}
 			switch (Token) {
-			case CHAR:	k = UCHARSIZE; break;
-			case INT:	k = INTSIZE; break;
-			case UNSIGNED:	k = UINTSIZE; break;
+			case CHAR:	k = CHARSIZE; noscan = 0; break;
+			case INT:	k = INTSIZE; noscan = 0; break;
+			case LONG:	k = LONGSIZE; noscan = 0; break;
+			case SHORT:	k = SHORTSIZE; noscan = 0; break;
 			case STRUCT:
 			case UNION:	k = primtype(Token, NULL);
 					k = objsize(k, TVARIABLE, 1);
+					noscan = 0;
 					break;
 			}
 		}
-		Token = scan();
+		if (!noscan) {
+			Token = scan();
+		}
 		if (STAR == Token) {
 			k = PTRSIZE;
 			Token = scan();

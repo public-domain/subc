@@ -304,8 +304,20 @@ int objsize(int prim, int type, int size) {
 	sp = prim & STCMASK;
 	if (PINT == prim)
 		k = INTSIZE;
+	else if (PUINT == prim)
+		k = UINTSIZE;
+	else if (PCHAR == prim)
+		k = CHARSIZE;
 	else if (PUCHAR == prim)
 		k = UCHARSIZE;
+	else if (PSHORT == prim)
+		k = SHORTSIZE;
+	else if (PUSHORT == prim)
+		k = USHORTSIZE;
+	else if (PLONG == prim)
+		k = LONGSIZE;
+	else if (PULONG == prim)
+		k = ULONGSIZE;
 	else if (INTPTR == prim || UCHARPTR == prim || VOIDPTR == prim)
 		k = PTRSIZE;
 	else if (INTPP == prim || UCHARPP == prim || VOIDPP == prim)
