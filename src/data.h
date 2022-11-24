@@ -58,6 +58,7 @@ extern_ int	Retlab;
 /* local init structure */
 extern_ int	LIaddr[MAXLOCINIT];
 extern_ int	LIval[MAXLOCINIT];
+extern_ int	LItype[MAXLOCINIT];
 extern_ int	Nli;
 
 /* synthesizer operand queue */

@@ -448,6 +448,7 @@ static node *comp_size(void) {
 static node *prefix(int *lv) {
 	node	*n;
 	int	t;
+	int par;
 
 	switch (Token) {
 	case INCR:
@@ -525,9 +526,10 @@ static node *prefix(int *lv) {
 		return n;
 	case SIZEOF:
 		Token = scan();
-		lparen();
+		par = Token == LPAREN;
+		if (par) lparen();
 		n = comp_size();
-		rparen();
+		if (par) rparen();
 		lv[LVPRIM] = PINT;
 		lv[LVADDR] = 0;
 		return n;
@@ -910,6 +912,25 @@ int constexpr(void) {
 	n = fold_reduce(n);
 	if (NULL == n || OP_LIT != n->op) {
 		error("constant expression expected", NULL);
+		return 0;
+	}
+	return n->args[0];
+}
+
+int ldlabexpr(void) {
+	node	*n;
+	int	lv[LV];
+
+	Ndtop = 1;
+	n = binexpr(lv);
+	notvoid(lv[LVPRIM]);
+	n = fold_reduce(n);
+	if (NULL == n || ( OP_LDLAB != n->op && OP_LIT != n->op)) {
+		error("constant initializer expected", NULL);
+		return 0;
+	}
+	if (OP_LIT == n->op && n->args[0] != 0) {
+		error("pointer can only be inialized by NULL", NULL);
 		return 0;
 	}
 	return n->args[0];

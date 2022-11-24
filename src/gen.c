@@ -177,10 +177,11 @@ void queue(int type, int val, char *name) {
 }
 
 void genaddr(int y) {
+	int	t;
 	gentext();
-	if (CAUTO == Stcls[y])
+	if (CAUTO == Stcls[y]) {
 		queue(addr_auto, Vals[y], NULL);
-	else if (CLSTATC == Stcls[y])
+	} else if (CLSTATC == Stcls[y])
 		queue(addr_static, Vals[y], NULL);
 	else
 		queue(addr_globl, 0, Names[y]);
@@ -597,8 +598,14 @@ void genlocinit(void) {
 	int	i;
 
 	gentext();
-	for (i=0; i<Nli; i++)
-		cginitlw(LIval[i], LIaddr[i]);
+	for (i=0; i<Nli; i++) {
+		if (ptrtype1(LItype[i]) && LIval[i] != 0) {
+			cgldsa(LIval[i]);
+			cgstorlw(LIaddr[i]);
+		} else {
+			cginitlw(LIval[i], LIaddr[i]);
+		}
+	}
 }
 
 /* data definitions */
@@ -807,7 +814,7 @@ void genrval(int *lv) {
 	else if (CAUTO == Stcls[lv[LVSYM]]) {
 		if (PUCHAR == lv[LVPRIM])
 			queue(auto_byte, Vals[lv[LVSYM]], NULL);
-		else
+		else 
 			queue(auto_word, Vals[lv[LVSYM]], NULL);
 	}
 	else if (CLSTATC == Stcls[lv[LVSYM]]) {

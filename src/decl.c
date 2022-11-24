@@ -333,11 +333,20 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		if (CTYPE == scls)
 			error(unsupp, NULL);
 		Token = scan();
-		*pval = constexpr();
-		if (PUCHAR == *pprim)
-			*pval &= 0xff;
-		if (*pval && !inttype(*pprim))
-			error("non-zero pointer initialization", NULL);
+		//fprintf(stderr,"JML constexp %s", Text);
+		if (ptrtype1(*pprim)) {
+			*pval = ldlabexpr();
+		} else {
+			*pval = constexpr();
+			if (PU8 == *pprim)
+				*pval &= 0xff;
+			else if (PU16 == *pprim)
+				*pval &= 0xffff;
+			else if (PU32 == *pprim)
+				*pval &= 0xffffffff;
+			if (*pval && !inttype(*pprim))
+				error("non-zero pointer initialization", NULL);
+		}
 		*pinit = 1;
 	}
 	else if (!pmtr && LPAREN == Token) {
@@ -534,7 +543,8 @@ static int localdecls(void) {
 			}
 			else {
 				addr -= rsize;
-				addloc(name, prim, type, CAUTO, size, addr, 0);
+				addloc(name, prim, type, CAUTO, 
+						size, addr, val);
 			}
 			if (ini && !stat) {
 				if (Nli >= MAXLOCINIT) {
@@ -543,6 +553,7 @@ static int localdecls(void) {
 					Nli = 0;
 				}
 				LIaddr[Nli] = addr;
+				LItype[Nli] = prim;
 				LIval[Nli++] = val;
 			}
 			if (COMMA == Token)

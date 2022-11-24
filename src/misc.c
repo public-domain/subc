@@ -109,6 +109,18 @@ int inttype(int p) {
 		PULONG == p || PLONG == p;
 }
 
+int ptrtype1(int p)
+{
+	return UCHARPTR == p ||
+               CHARPTR == p ||
+               INTPTR == p ||
+               UINTPTR == p ||
+               LONGPTR == p ||
+               ULONGPTR == p ||
+               SHORTPTR == p ||
+               USHORTPTR == p;
+}
+
 int unsigtype(int p) {
 	if (!inttype(p)) {
 		return 1;

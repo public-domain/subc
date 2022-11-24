@@ -36,6 +36,7 @@ int main(int argc, char **argv) {
 	int	p[4];
 	char	*a[4], *e[2];
 	unsigned u;
+	char 	*initia = "Auto init works\n";
 
 	if (argc > 1) {
 		switch (argv[1][0]) {
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
 		printf("SIZEOF char %d short %d int %d long %d\n",
 			sizeof(char), sizeof(short), sizeof(int), sizeof(long));
 	}
+	printf("%s\n", initia);
 	if (verbose) kprintf(1, "sbrk\n");
 	n = _sbrk(1024);
 	m = _sbrk(-1024);

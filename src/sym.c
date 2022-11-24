@@ -318,9 +318,15 @@ int objsize(int prim, int type, int size) {
 		k = LONGSIZE;
 	else if (PULONG == prim)
 		k = ULONGSIZE;
-	else if (INTPTR == prim || UCHARPTR == prim || VOIDPTR == prim)
+	else if (INTPTR == prim || UCHARPTR == prim || VOIDPTR == prim ||
+			UINTPTR == prim || CHARPTR == prim ||
+			SHORTPTR == prim || LONGPTR == prim ||
+			USHORTPTR == prim || ULONGPTR == prim)
 		k = PTRSIZE;
-	else if (INTPP == prim || UCHARPP == prim || VOIDPP == prim)
+	else if (INTPP == prim || UCHARPP == prim || VOIDPP == prim ||
+			UINTPP == prim || CHARPP == prim ||
+			SHORTPP == prim || LONGPP == prim ||
+			USHORTPP == prim || ULONGPP == prim)
 		k = PTRSIZE;
 	else if (STCPTR == sp || STCPP == sp)
 		k = PTRSIZE;
@@ -347,13 +353,31 @@ static char *typename(int p) {
 	case UNIPP:	return "UNIO**";
 	}
 	return	PINT    == p? "INT":
-		PUCHAR   == p? "UCHAR":
+		PUCHAR  == p? "UCHAR":
+		PCHAR   == p? "CHAR":
+		PUINT   == p? "UINT":
+		PSHORT == p? "SHORT":
+		PUSHORT == p? "USHORT":
+		PLONG == p? "LONG":
+		PULONG == p? "ULONG":
 		INTPTR  == p? "INT*":
 		UCHARPTR == p? "UCHAR*":
+		CHARPTR   == p? "CHAR":
+		UINTPTR   == p? "UINT*":
+		SHORTPTR == p? "SHORT*":
+		USHORTPTR == p? "USHORT*":
+		LONGPTR == p? "LONG*":
+		ULONGPTR == p? "ULONG*":
 		VOIDPTR == p? "VOID*":
 		FUNPTR  == p? "FUN*":
 		INTPP   == p? "INT**":
 		UCHARPP  == p? "UCHAR**":
+		CHARPP   == p? "CHAR*":
+		UINTPP   == p? "UINT*":
+		SHORTPP == p? "SHORT*":
+		USHORTPP == p? "USHORT*":
+		LONGPP == p? "LONG*":
+		ULONGPP == p? "ULONG*":
 		VOIDPP  == p? "VOID**":
 		PVOID   == p? "VOID": "n/a";
 }

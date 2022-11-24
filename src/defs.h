@@ -135,10 +135,16 @@ enum {
 	literal,
 	auto_byte,
 	auto_word,
+	auto_dword,
+	auto_qword,
 	static_byte,
 	static_word,
+	static_dword,
+	static_qword,
 	globl_byte,
-	globl_word
+	globl_word,
+	globl_dword,
+	globl_qword
 };
 
 /* compare instructions */

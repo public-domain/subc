@@ -28,7 +28,9 @@ typedef struct s1 {
 
 int main()
 {
-	printf("char %d\n", sizeof(s));
+	char *p = "Tera miy\n";
+	char *p2 = "jhnkjhjk\n";
+	printf("char %d\n%s", sizeof(s), p, p2);
 	printf("char + int %d\n", sizeof(s1));
 	return 0;
 }
