@@ -102,7 +102,7 @@ static node *primary(int *lv) {
 		gendefb(0);
 		genalign(k+1);
 		n = mkleaf(OP_LDLAB, lab);
-		lv[LVPRIM] = CHARPTR;
+		lv[LVPRIM] = UCHARPTR;
 		return n;
 	case LPAREN:
 		Token = scan();
@@ -180,11 +180,13 @@ int deref(int p) {
 	switch (p) {
 	case INTPP:	return INTPTR;
 	case INTPTR:	return PINT;
-	case CHARPP:	return CHARPTR;
-	case CHARPTR:	return PCHAR;
+	case UINTPP:	return UINTPTR;
+	case UINTPTR:	return PUINT;
+	case UCHARPP:	return UCHARPTR;
+	case UCHARPTR:	return PUCHAR;
 	case VOIDPP:	return VOIDPTR;
-	case VOIDPTR:	return PCHAR;
-	case FUNPTR:	return PCHAR;
+	case VOIDPTR:	return PUCHAR;
+	case FUNPTR:	return PUCHAR;
 	}
 	y = p & ~STCMASK;
 	switch (p & STCMASK) {
@@ -286,7 +288,8 @@ static node *postfix(int *lv) {
 				if (PINT != lv2[LVPRIM])
 					error("non-integer subscript", NULL);
 				if (    PINT == p || INTPTR == p ||
-					CHARPTR == p || VOIDPTR == p ||
+					UINTPTR == p ||
+					UCHARPTR == p || VOIDPTR == p ||
 					STCPTR == (p & STCMASK) ||
 					UNIPTR == (p & STCMASK)
 				) {
@@ -369,6 +372,7 @@ static node *comp_size(void) {
 
 	utype = 0;
 	if (	CHAR == Token || INT == Token || VOID == Token ||
+		UNSIGNED == Token ||
 		STRUCT == Token || UNION == Token ||
                 (IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
@@ -377,8 +381,9 @@ static node *comp_size(void) {
 		}
 		else {
 			switch (Token) {
-			case CHAR:	k = CHARSIZE; break;
+			case CHAR:	k = UCHARSIZE; break;
 			case INT:	k = INTSIZE; break;
+			case UNSIGNED:	k = UINTSIZE; break;
 			case STRUCT:
 			case UNION:	k = primtype(Token, NULL);
 					k = objsize(k, TVARIABLE, 1);
@@ -423,7 +428,7 @@ static node *comp_size(void) {
  *
  * type :=
  *	  INT
- *	| CHAR
+ *	| UCHAR
  *	| VOID
  *	| STRUCT IDENT
  *	| UNION IDENT
@@ -536,6 +541,7 @@ static node *cast(int *lv) {
 	if (LPAREN == Token) {
 		Token = scan();
 		if (	INT == Token || CHAR == Token || VOID == Token ||
+			UNSIGNED == Token ||
 			STRUCT == Token || UNION == Token
 		) {
 			t = primtype(Token, NULL);

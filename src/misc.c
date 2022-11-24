@@ -30,7 +30,6 @@ void init(void) {
 	Q_cmp = cnone;
 	Q_bool = bnone;
 	addglob("", 0, 0, 0, 0, 0, NULL, 0);
-	addglob("__SUBC__", 0, TMACRO, 0, 0, 0, globname(""), 0);
 	defines = DEFINES;
 	while (defines[0]) {
 		addglob(defines, 0, TMACRO, 0, 0, 0, globname(""), 0);
@@ -105,7 +104,16 @@ int eofcheck(void) {
 }
 
 int inttype(int p) {
-	return PINT == p || PCHAR == p;
+	return PINT == p || PUCHAR == p || PUINT == p ||
+		PCHAR == p || PSHORT == p || PUSHORT == p ||
+		PULONG == p || PLONG == p;
+}
+
+int unsigtype(int p) {
+	if (!inttype(p)) {
+		return 1;
+	}
+	return PUINT == p || PUCHAR == p || PULONG == p || PUSHORT == p;
 }
 
 int comptype(int p) {

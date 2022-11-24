@@ -447,7 +447,7 @@ void test_sprintf(void) {
 }
 
 void test_math(void) {
-	#define unsigned	char *
+	/* #define unsigned	char **/
 	#define MAX		100
 	int	i, j, k;
 	int	rns[MAX];

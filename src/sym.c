@@ -154,7 +154,7 @@ static void defglob(char *name, int prim, int type, int size, int val,
 		else
 			genbss(gsym(name), objsize(prim, TVARIABLE, size), st);
 	}
-	else if (PCHAR == prim) {
+	else if (PUCHAR == prim) {
 		if (TARRAY == type)
 			genbss(gsym(name), size, st);
 		else {
@@ -253,7 +253,7 @@ static void defloc(int prim, int type, int size, int val, int init) {
 		else
 			genbss(labname(val), objsize(prim, TVARIABLE, size),1);
 	}
-	else if (PCHAR == prim) {
+	else if (PUCHAR == prim) {
 		if (TARRAY == type)
 			genbss(labname(val), size, 1);
 		else {
@@ -304,11 +304,11 @@ int objsize(int prim, int type, int size) {
 	sp = prim & STCMASK;
 	if (PINT == prim)
 		k = INTSIZE;
-	else if (PCHAR == prim)
-		k = CHARSIZE;
-	else if (INTPTR == prim || CHARPTR == prim || VOIDPTR == prim)
+	else if (PUCHAR == prim)
+		k = UCHARSIZE;
+	else if (INTPTR == prim || UCHARPTR == prim || VOIDPTR == prim)
 		k = PTRSIZE;
-	else if (INTPP == prim || CHARPP == prim || VOIDPP == prim)
+	else if (INTPP == prim || UCHARPP == prim || VOIDPP == prim)
 		k = PTRSIZE;
 	else if (STCPTR == sp || STCPP == sp)
 		k = PTRSIZE;
@@ -335,13 +335,13 @@ static char *typename(int p) {
 	case UNIPP:	return "UNIO**";
 	}
 	return	PINT    == p? "INT":
-		PCHAR   == p? "CHAR":
+		PUCHAR   == p? "UCHAR":
 		INTPTR  == p? "INT*":
-		CHARPTR == p? "CHAR*":
+		UCHARPTR == p? "UCHAR*":
 		VOIDPTR == p? "VOID*":
 		FUNPTR  == p? "FUN*":
 		INTPP   == p? "INT**":
-		CHARPP  == p? "CHAR**":
+		UCHARPP  == p? "UCHAR**":
 		VOIDPP  == p? "VOID**":
 		PVOID   == p? "VOID": "n/a";
 }

@@ -262,6 +262,7 @@ static int keyword(char *s) {
 	case 'd':
 		if (!strcmp(s, "default")) return DEFAULT;
 		if (!strcmp(s, "do")) return DO;
+		if (!strcmp(s, "double")) return DOUBLE;
 		break;
 	case 'e':
 		if (!strcmp(s, "else")) return ELSE;
@@ -269,17 +270,23 @@ static int keyword(char *s) {
 		if (!strcmp(s, "extern")) return EXTERN;
 		break;
 	case 'f':
+		if (!strcmp(s, "float")) return FLOAT;
 		if (!strcmp(s, "for")) return FOR;
 		break;
 	case 'i':
 		if (!strcmp(s, "if")) return IF;
 		if (!strcmp(s, "int")) return INT;
 		break;
+	case 'l':
+		if (!strcmp(s, "long")) return LONG;
+		break;
 	case 'r':
 		if (!strcmp(s, "register")) return REGISTER;
 		if (!strcmp(s, "return")) return RETURN;
 		break;
 	case 's':
+		if (!strcmp(s, "short")) return SHORT;
+		if (!strcmp(s, "signed")) return SIGNED;
 		if (!strcmp(s, "sizeof")) return SIZEOF;
 		if (!strcmp(s, "static")) return STATIC;
 		if (!strcmp(s, "struct")) return STRUCT;
@@ -290,6 +297,7 @@ static int keyword(char *s) {
 		break;
 	case 'u':
 		if (!strcmp(s, "union")) return UNION;
+		if (!strcmp(s, "unsigned")) return UNSIGNED;
 		break;
 	case 'v':
 		if (!strcmp(s, "void")) return VOID;

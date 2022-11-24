@@ -144,4 +144,5 @@ void	spill(void);
 int	synch(int syn);
 void	top(void);
 int	typematch(int p1, int p2);
+int	unsigtype(int p);
 int	usertype(char *s);

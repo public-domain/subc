@@ -230,7 +230,13 @@ static int ptr(int p) {
 
 	sp = p & STCMASK;
 	return INTPTR == p || INTPP == p ||
+		UINTPTR == p || UINTPP == p ||
 		CHARPTR == p || CHARPP == p ||
+		UCHARPTR == p || UCHARPP == p ||
+		USHORTPTR == p || USHORTPP == p ||
+		SHORTPTR == p || SHORTPP == p ||
+		ULONGPTR == p || ULONGPP == p ||
+		LONGPTR == p || LONGPP == p ||
 		VOIDPTR == p || VOIDPP == p ||
 		STCPTR == sp || STCPP == sp ||
 		UNIPTR == sp || UNIPP == sp ||
@@ -238,15 +244,26 @@ static int ptr(int p) {
 }
 
 static int needscale(int p) {
-	int	sp;
-
+	int	sp, r;
+	
 	sp = p & STCMASK;
-	return INTPTR == p || INTPP == p || CHARPP == p || VOIDPP == p ||
-		STCPTR == sp || STCPP == sp || UNIPTR == sp || UNIPP == sp;
+	r = INTPTR == p || INTPP == p || 
+		UINTPTR == p || UINTPP == p || 
+		SHORTPTR == p || SHORTPP == p || 
+		USHORTPTR == p || USHORTPP == p || 
+		LONGPTR == p || LONGPP == p || 
+		ULONGPTR == p || ULONGPP == p || 
+		CHARPP == p || UCHARPP == p || VOIDPP == p ||
+		STCPTR == sp || STCPP == sp || 
+		UNIPTR == sp || UNIPP == sp;
+	if (r) {
+		r = objsize(deref(p), TVARIABLE, 1);
+	}
+	return r;
 }
 
 int genadd(int p1, int p2, int swapped) {
-	int	rp = PINT, t;
+	int	rp = PINT, t, sc;
 
 	gentext();
 	if (cgload2() || !swapped) {
@@ -255,22 +272,20 @@ int genadd(int p1, int p2, int swapped) {
 		p2 = t;
 	}
 	if (ptr(p1)) {
-		if (needscale(p1)) {
-			if (	(p1 & STCMASK) == STCPTR ||
-				(p1 & STCMASK) == UNIPTR
-			)
-				cgscale2by(objsize(deref(p1), TVARIABLE, 1));
+		sc = needscale(p1);
+		if (sc) {
+			if (sc != BPW) 
+				cgscale2by(sc);
 			else
 				cgscale2();
 		}
 		rp = p1;
 	}
 	else if (ptr(p2)) {
-		if (needscale(p2)) {
-			if (	(p2 & STCMASK) == STCPTR ||
-				(p2 & STCMASK) == UNIPTR
-			)
-				cgscaleby(objsize(deref(p2), TVARIABLE, 1));
+		sc = needscale(p2);
+		if (sc) {
+			if (sc != BPW)
+				cgscaleby(sc);
 			else
 				cgscale();
 		}
@@ -281,29 +296,27 @@ int genadd(int p1, int p2, int swapped) {
 }
 
 int gensub(int p1, int p2, int swapped) {
-	int	rp = PINT;
+	int	rp = PINT, sc;
 
 	gentext();
 	if (cgload2() || !swapped) cgswap();
 	if (!inttype(p1) && !inttype(p2) && p1 != p2)
 		error("incompatible pointer types in binary '-'", NULL);
 	if (ptr(p1) && !ptr(p2)) {
-		if (needscale(p1)) {
-			if (	(p1 & STCMASK) == STCPTR ||
-				(p1 & STCMASK) == UNIPTR
-			)
-				cgscale2by(objsize(deref(p1), TVARIABLE, 1));
+		sc = needscale(p1);
+		if (sc) {
+			if (sc != BPW)
+				cgscale2by(sc);
 			else
 				cgscale2();
 		}
 		rp = p1;
 	}
 	cgsub();
-	if (needscale(p1) && needscale(p2)) {
-		if (	(p1 & STCMASK) == STCPTR ||
-			(p1 & STCMASK) == UNIPTR
-		)
-			cgunscaleby(objsize(deref(p1), TVARIABLE, 1));
+	sc = needscale(p1);
+	if (sc && needscale(p2)) {
+		if (sc != BPW)
+			cgunscaleby(sc);
 		else
 			cgunscale();
 	}
@@ -416,7 +429,7 @@ void genlognot(void) {
 void genind(int p) {
 	gentext();
 	commit();
-	if (PCHAR == p)
+	if (PUCHAR == p)
 		cgindb();
 	else
 		cgindw();
@@ -691,7 +704,7 @@ void geninc(int *lv, int inc, int pre) {
 		genincptr(lv, inc, pre);
 		return;
 	}
-	b = PCHAR == lv[LVPRIM];
+	b = PUCHAR == lv[LVPRIM];
 	/* will duplicate move to aux register in (*char)++ */
 	commit();
 	if (!y && !pre) cgldinc();
@@ -757,26 +770,26 @@ void genstore(int *lv) {
 	gentext();
 	if (!lv[LVSYM]) {
 		cgpopptr();
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			cgstorib();
 		else
 			cgstoriw();
 
 	}
 	else if (CAUTO == Stcls[lv[LVSYM]]) {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			cgstorlb(Vals[lv[LVSYM]]);
 		else
 			cgstorlw(Vals[lv[LVSYM]]);
 	}
 	else if (CLSTATC == Stcls[lv[LVSYM]]) {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			cgstorsb(Vals[lv[LVSYM]]);
 		else
 			cgstorsw(Vals[lv[LVSYM]]);
 	}
 	else {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			cgstorgb(gsym(Names[lv[LVSYM]]));
 		else
 			cgstorgw(gsym(Names[lv[LVSYM]]));
@@ -792,19 +805,19 @@ void genrval(int *lv) {
 		genind(lv[LVPRIM]);
 	}
 	else if (CAUTO == Stcls[lv[LVSYM]]) {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			queue(auto_byte, Vals[lv[LVSYM]], NULL);
 		else
 			queue(auto_word, Vals[lv[LVSYM]], NULL);
 	}
 	else if (CLSTATC == Stcls[lv[LVSYM]]) {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			queue(static_byte, Vals[lv[LVSYM]], NULL);
 		else
 			queue(static_word, Vals[lv[LVSYM]], NULL);
 	}
 	else {
-		if (PCHAR == lv[LVPRIM])
+		if (PUCHAR == lv[LVPRIM])
 			queue(globl_byte, 0, Names[lv[LVSYM]]);
 		else
 			queue(globl_word, 0, Names[lv[LVSYM]]);

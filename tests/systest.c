@@ -35,10 +35,7 @@ int main(int argc, char **argv) {
 	char	buf[256];
 	int	p[4];
 	char	*a[4], *e[2];
-	Typetest t;
-
-	//t.c[0] = 0;
-	printf("sizeof typedef: %d\n", sizeof(t));
+	unsigned u;
 
 	if (argc > 1) {
 		switch (argv[1][0]) {
@@ -62,6 +59,11 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	u = 0;
+	u--;
+	if (u < 0) {
+		error("Unsigned < 0!");
+	}
 	if (verbose) kprintf(1, "sbrk\n");
 	n = _sbrk(1024);
 	m = _sbrk(-1024);

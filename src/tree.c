@@ -283,7 +283,7 @@ static void emittree1(node *a) {
 	case OP_GTEQ:	emittree1(a->left);
 			emittree1(a->right);
 			commit();
-			ptr = !inttype(a->args[0]);
+			ptr = unsigtype(a->args[0]);
 			switch(a->op) {
 			case OP_EQUAL:	queue_cmp(equal); break;
 			case OP_NOTEQ:	queue_cmp(not_equal); break;
