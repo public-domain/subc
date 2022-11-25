@@ -48,4 +48,13 @@
 #define ULONGPP U32PP
 #define ULONGSIZE 4
 
+#define PFLOAT PU32
+#define FLOATPTR U32PTR
+#define FLOATPP U32PP
+#define FLOATSIZE 4
+
+#define PDOUBLE PU32
+#define DOUBLEPTR U32PTR
+#define DOUBLEPP U32PP
+#define DOUBLESIZE 4
 

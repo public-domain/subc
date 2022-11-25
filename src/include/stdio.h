@@ -31,8 +31,8 @@ typedef struct {
 	int	ptr;
 	int	end;
 	int	size;
-	int	ch;
-	char	*buf;
+	int	ch; 
+	char	*buf; 
 } FILE;
 
 extern FILE	*stdin, *stdout, *stderr;

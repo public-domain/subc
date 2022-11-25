@@ -40,6 +40,7 @@ extern_ char	Stcls[NSYMBOLS];
 extern_ int	Sizes[NSYMBOLS];
 extern_ int	Vals[NSYMBOLS];
 extern_ char	*Mtext[NSYMBOLS];
+extern_ char	*Stext[NSYMBOLS];
 extern_ int	Globs;
 extern_ int	Locs;
 

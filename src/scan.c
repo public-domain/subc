@@ -257,6 +257,7 @@ static int keyword(char *s) {
 	case 'c':
 		if (!strcmp(s, "case")) return CASE;
 		if (!strcmp(s, "char")) return CHAR;
+		if (!strcmp(s, "const")) return CONST;
 		if (!strcmp(s, "continue")) return CONTINUE;
 		break;
 	case 'd':
@@ -314,14 +315,14 @@ static int macro(char *name) {
 	int	y;
 
 	y = findmac(name);
-	if (!y || Types[y] != TMACRO)
+	if (!y || Mtext[y] == NULL)
 		return 0;
 	playmac(Mtext[y]);
 	return 1;
 }
 
 static int scanpp(void) {
-	int	c, t;
+	int	c, t, y;
 
 	if (Rejected != -1) {
 		t = Rejected;
@@ -550,6 +551,9 @@ static int scanpp(void) {
 			}
 			else if (isalpha(c) || '_' == c) {
 				Value = scanident(c, Text, TEXTLEN);
+				if (!strcmp(Text, "ox1")) {
+					exit(-1);
+				}
 				if (Expandmac && macro(Text))
 					break;
 				if ((t = keyword(Text)) != 0)

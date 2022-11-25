@@ -101,7 +101,7 @@ static int initlist(char *name, int prim) {
 	return n;
 }
 
-static int getunsig(int t) {
+int getunsig(int t) {
 	return t == CHAR? PUCHAR:
 		t == SHORT? PUSHORT:
 		t == INT? PUINT:
@@ -109,7 +109,7 @@ static int getunsig(int t) {
 		t;
 }
 
-static int getsig(int t) {
+int getsig(int t) {
 	return t == CHAR? PCHAR:
 		t == SHORT? PSHORT:
 		t == INT? PINT:
@@ -124,9 +124,14 @@ int primtype(int t, char *s) {
 
 	p = t == CHAR? PUCHAR:
 		t == INT? PINT:
+		t == LONG? PLONG:
+		t == SHORT? PSHORT:
 		t == UNSIGNED? PUINT:
+		t == SIGNED? PINT:
 		t == STRUCT? PSTRUCT:
 		t == UNION? PUNION:
+		t == DOUBLE? PDOUBLE:
+		t == FLOAT? PFLOAT:
 		PVOID;
 	if (PUNION == p || PSTRUCT == p) {
 		if (!s) {
@@ -193,11 +198,14 @@ static int pmtrdecls(void) {
 			if (	CHAR == Token || INT == Token ||
 				VOID == Token || UNSIGNED == Token ||
 				SIGNED == Token || LONG == Token ||
-				SHORT == Token ||
+				SHORT == Token || CONST == Token ||
 				STRUCT == Token || UNION == Token ||
 				(IDENT == Token && utype != 0)
 			) {
 				name[0] = 0;
+				if (CONST == Token) {
+					Token = scan();
+				}
 				if (UNSIGNED == Token) {
 					Token = scan();
 					if (CHAR == Token || SHORT == Token ||
@@ -227,7 +235,8 @@ static int pmtrdecls(void) {
 					return 0;
 			}
 			else {
-				error("type specifier expected at: %s", Text);
+				error("#ERR002 type specifier expected at: %s", 
+						Text);
 				Token = synch(RPAREN);
 				return na;
 			}
@@ -333,7 +342,6 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		if (CTYPE == scls)
 			error(unsupp, NULL);
 		Token = scan();
-		//fprintf(stderr,"JML constexp %s", Text);
 		if (ptrtype1(*pprim)) {
 			*pval = ldlabexpr();
 		} else {
@@ -404,7 +412,7 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		}
 	}
 	if (PVOID == *pprim)
-		error("'void' is not a valid type: %s", name);
+		error("#ERR004 'void' is not a valid type: %s", name);
 	return type;
 }
 
@@ -453,7 +461,7 @@ static int localdecls(void) {
 	Nli = 0;
 	utype = 0;
 	while ( AUTO == Token || EXTERN == Token || REGISTER == Token ||
-		STATIC == Token || VOLATILE == Token ||
+		STATIC == Token || VOLATILE == Token || CONST == Token ||
 		INT == Token || UNSIGNED == Token || SIGNED == Token ||
 		LONG == Token || SHORT == Token ||
 		CHAR == Token || VOID == Token ||
@@ -461,6 +469,9 @@ static int localdecls(void) {
 		STRUCT == Token || UNION == Token ||
 		(IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
+		if (CONST == Token) {
+			Token = scan();
+		}
 		if (ENUM == Token) {
 			enumdecl(0);
 			continue;
@@ -581,11 +592,11 @@ static void signature(int fn, int from, int to) {
 	for (i=0; i<MAXFNARGS && from < to; i++)
 		types[i] = Prims[--to];
 	types[i] = 0;
-	if (NULL == Mtext[fn]) {
-		Mtext[fn] = galloc((i+1) * sizeof(int), 1);
-		memcpy(Mtext[fn], types, (i+1) * sizeof(int));
+	if (NULL == Stext[fn]) {
+		Stext[fn] = galloc((i+1) * sizeof(int), 1);
+		memcpy(Stext[fn], types, (i+1) * sizeof(int));
 	}
-	else if (intcmp((int *) Mtext[fn], types))
+	else if (intcmp((int *) Stext[fn], types))
 		error("declaration does not match prior prototype: %s",
 			Names[fn]);
 }
@@ -604,8 +615,9 @@ void decl(int clss, int prim, int utype) {
 	char	name[NAMELEN+1];
 	int	pbase, type, size = 0, val, init;
 	int	lsize;
-
+	int loop = 0;
 	pbase = prim;
+	name[0] = '\0';
 	for (;;) {
 		prim = pbase;
 		val = 0;
@@ -703,39 +715,44 @@ void structdecl(int clss, int uniondecl) {
 	align = 0;
 	maxalign = 1;
 	while (	INT == Token || CHAR == Token || VOID == Token ||
-		LONG == Token || SHORT == Token || 
+		LONG == Token || SHORT == Token || CONST == Token ||
 		SIGNED == Token || UNSIGNED == Token ||
 		STRUCT == Token || UNION == Token ||
 		(IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
+		if (CONST == Token) {
+			Token = scan();
+		}
 		if (Token == UNSIGNED) {
+			Token = scan();
 			if (CHAR == Token ||
 				INT == Token ||
 				SHORT == Token ||
 				LONG == Token)
 			{
-				prim = getunsig(Token);
+				base = getunsig(Token);
 				Token = scan();
 			} else {
-				prim = PUINT;
+				base = PUINT;
 			}
 		} else if (SIGNED == Token) {
+			Token = scan();
 			if (CHAR == Token ||
 				INT == Token ||
 				SHORT == Token ||
 				LONG == Token)
 			{
-				prim = getsig(Token);
+				base = getsig(Token);
 				Token = scan();
 			} else {
-				prim = PINT;
+				base = PINT;
 			}
 	
 		} else {
 			base = utype? Prims[utype]: primtype(Token, NULL);
+			Token = scan();
 		}
 		size = 0;
-		Token = scan();
 		for (;;) {
 			if (eofcheck()) return;
 			prim = base;
@@ -797,6 +814,9 @@ void typedecl(void) {
 	int	utype, prim;
 
 	Token = scan();
+	if (CONST == Token) {
+		Token = scan();
+	}
 	if (UNSIGNED == Token) {
 		Token = scan();
 		if (CHAR == Token ||
@@ -861,6 +881,9 @@ void top(void) {
 	case STATIC:	clss = CSTATIC; Token = scan(); break;
 	case VOLATILE:	Token = scan(); break;
 	}
+	if (CONST == Token) {
+		Token = scan();
+	}
 	switch (Token) {
 	case ENUM:
 		enumdecl(1);
@@ -905,6 +928,8 @@ void top(void) {
 	case LONG:
 	case SHORT:
 	case VOID:
+	case DOUBLE:
+	case FLOAT:
 		prim = primtype(Token, NULL);
 		Token = scan();
 		decl(clss, prim, 0);
@@ -918,7 +943,7 @@ void top(void) {
 			decl(clss, PINT, 0);
 		break;
 	default:
-		error("type specifier expected at: %s", Text);
+		error("#ERR001 type specifier expected at: %s", Text);
 		Token = synch(SEMI);
 		break;
 	}

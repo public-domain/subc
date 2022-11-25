@@ -43,7 +43,7 @@ int findmac(char *s) {
 	int	i;
 
 	for (i=0; i<Globs; i++)
-		if (	TMACRO == Types[i] &&
+		if (	NULL != Mtext[i] &&
 			*s == *Names[i] && !strcmp(s, Names[i])
 		)
 			return i;
@@ -179,35 +179,38 @@ static void defglob(char *name, int prim, int type, int size, int val,
 int redeclare(char *name, int oldcls, int newcls) {
 	switch (oldcls) {
 	case CEXTERN:
+		if (newcls == 0) return 0;
 		if (newcls != CPUBLIC && newcls != CEXTERN)
-			error("extern symbol redeclared static: %s", name);
+			error("#ERR005 extern symbol redeclared static: %s", name);
 		return newcls;
 	case CPUBLIC:
+		if (newcls == 0) return 0;
 		if (CEXTERN == newcls)
 			return CPUBLIC;
 		if (newcls != CPUBLIC) {
-			error("extern symbol redeclared static: %s", name);
+			error("#ERR006 extern symbol redeclared static: %s", name);
 			return CPUBLIC;
 		}
 		break;
 	case CSPROTO:
 		if (newcls != CSTATIC && newcls != CSPROTO)
-			error("static symbol redeclared extern: %s", name);
+			error("#ERR007 static symbol redeclared extern: %s", name);
 		return newcls;
 	case CSTATIC:
+		if (newcls == 0) return 0;
 		if (CSPROTO == newcls)
 			return CSTATIC;
 		if (newcls != CSTATIC) {
-			error("static symbol redeclared extern: %s", name);
+			error("#ERR008 static symbol redeclared extern: %s", name);
 			return CSTATIC;
 		}
 		break;
 	case CTYPE:
-		error("redefinition of typedef name", Text);
+		error("#ERR009 redefinition of typedef name", Text);
 		return CTYPE;
 		break;
 	}
-	error("redefined symbol: %s", name);
+	error("#ERR010 redefined symbol: %s", name);
 	return newcls;
 }
 
@@ -215,13 +218,16 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 		char *mtext, int init)
 {
 	int	y;
-
+	char 	*stext;
+	stext = NULL;
 	if (0 == *name)
 		y = 0;
 	else if ((y = findglob(name)) != 0) {
 		scls = redeclare(name, Stcls[y], scls);
 		if (CTYPE == scls) return y;
 		if (TFUNCTION == Types[y])
+			stext = Stext[y];
+		if (!mtext)
 			mtext = Mtext[y];
 	}
 	if (0 == y) {
@@ -229,8 +235,12 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 		Names[y] = globname(name);
 	}
 	else if (TFUNCTION == Types[y] || TMACRO == Types[y]) {
+		if (prim == 0 && type == TMACRO && NULL == Mtext[y]) {
+			Mtext[y] = (mtext);
+			return y;
+		}
 		if (Prims[y] != prim || Types[y] != type)
-			error("redefinition does not match prior type: %s",
+			error("#ERR011 redefinition does not match prior type: %s",
 				name);
 	}
 	if (CPUBLIC == scls || CSTATIC == scls)
@@ -240,6 +250,7 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 	Stcls[y] = scls;
 	Sizes[y] = size;
 	Vals[y] = val;
+	Stext[y] = stext;
 	Mtext[y] = mtext;
 	return y;
 }
@@ -396,7 +407,7 @@ void dumpsyms(char *title, char *sub, int from, int to) {
 				TARRAY == Types[i]? "ARRY":
 				TFUNCTION == Types[i]? "FUN ":
 				TCONSTANT == Types[i]? "CNST":
-				TMACRO == Types[i]? "MAC ":
+				NULL != Mtext[i]? "MAC ":
 				TSTRUCT == Types[i]? "STCT": "n/a",
 			CPUBLIC == Stcls[i]? "PUBLC":
 				CEXTERN == Stcls[i]? "EXTRN":
@@ -409,11 +420,11 @@ void dumpsyms(char *title, char *sub, int from, int to) {
 			Sizes[i],
 			Vals[i],
 			Names[i]);
-		if (TMACRO == Types[i])
+		if (NULL != Mtext[i])
 			printf(" [\"%s\"]", Mtext[i]);
 		if (TFUNCTION == Types[i]) {
 			printf(" (");
-			for (p = (int *) Mtext[i]; *p; p++) {
+			for (p = (int *) Stext[i]; *p; p++) {
 				printf("%s", typename(*p));
 				if (p[1]) printf(", ");
 			}

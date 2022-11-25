@@ -92,6 +92,8 @@ int	gensub(int p1, int p2, int swap);
 void	genswitch(int *vals, int *labs, int nc, int dflt);
 void	gentext(void);
 void	genxor(void);
+int	getsig(int t);
+int	getunsig(int t);
 char	*globname(char *s);
 char	*gsym(char *s);
 void	ident(void);

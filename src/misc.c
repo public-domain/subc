@@ -59,7 +59,7 @@ void match(int t, char *what) {
 		Token = scan();
 	}
 	else {
-		error("%s expected", what);
+		error("#ERR003 %s expected", what);
 	}
 }
 

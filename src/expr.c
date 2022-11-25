@@ -137,7 +137,7 @@ static node *fnargs(int fn, int *na) {
 	int	sgn[MAXFNARGS+1];
 	node	*n = NULL, *n2;
 
-	types = (int *) (fn? Mtext[fn]: NULL);
+	types = (int *) (fn? Stext[fn]: NULL);
 	*na = 0;
 	while (RPAREN != Token) {
 		n2 = asgmnt(lv);
@@ -166,9 +166,9 @@ static node *fnargs(int fn, int *na) {
 		else
 			break;
 	}
-	if (fn && TFUNCTION == Types[fn] && !Mtext[fn]) {
-		Mtext[fn] = galloc((*na+1) * sizeof(int), 1);
-		memcpy(Mtext[fn], sgn, (*na+1) * sizeof(int));
+	if (fn && TFUNCTION == Types[fn] && !Stext[fn]) {
+		Stext[fn] = galloc((*na+1) * sizeof(int), 1);
+		memcpy(Stext[fn], sgn, (*na+1) * sizeof(int));
 	}
 	rparen();
 	return n;
@@ -372,6 +372,9 @@ static node *comp_size(void) {
 	int	noscan = 0;
 
 	utype = 0;
+	if (CONST == Token) {
+		Token = scan();
+	}
 	if (	CHAR == Token || INT == Token || VOID == Token ||
 		UNSIGNED == Token || SIGNED == Token ||
 		SHORT == Token || LONG == Token ||
@@ -550,17 +553,33 @@ static node *prefix(int *lv) {
 static node *cast(int *lv) {
 	int	t;
 	node	*n;
-
+	
+	t = 0;
 	if (LPAREN == Token) {
 		Token = scan();
-		if (	INT == Token || CHAR == Token || VOID == Token ||
-			UNSIGNED == Token ||
-			STRUCT == Token || UNION == Token
-		) {
-			t = primtype(Token, NULL);
+		if (CONST == Token) {
 			Token = scan();
 		}
-		else {
+		if (UNSIGNED == Token) { 
+			Token = scan();
+			t = PUINT;
+		} else if (SIGNED == Token) { 
+			Token = scan();
+			t = PINT;
+		}
+		if (	INT == Token || CHAR == Token || VOID == Token ||
+			LONG == Token || SHORT == Token ||
+			STRUCT == Token || UNION == Token
+		) {
+			if (PUINT == t) {
+				t = getunsig(Token);
+			} else if (PINT == t) {
+				t = getsig(Token);
+			} else {
+				t = primtype(Token, NULL);
+			}
+			Token = scan();
+		} else if (t == 0) {
 			reject();
 			Token = LPAREN;
 			strcpy(Text, "(");
