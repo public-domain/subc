@@ -8,7 +8,7 @@
 #include "decl.h"
 
 static int declarator(int arg, int scls, char *name, int *pprim, int *psize,
-			int *pval, int *pinit);
+			int *pval, int *pinit, int *off);
 
 /*
  * enumdecl := { enumlist } ;
@@ -38,7 +38,7 @@ static void enumdecl(int glob) {
 			v = constexpr();
 		}
 		if (glob)
-			addglob(name, PINT, TCONSTANT, 0, 0, v++, NULL, 0);
+			addglob(name, PINT, TCONSTANT, 0, 0, v++, NULL, 0, 0);
 		else
 			addloc(name, PINT, TCONSTANT, 0, 0, v++, 0);
 		if (Token != COMMA)
@@ -243,7 +243,7 @@ static int pmtrdecls(void) {
 		}
 		size = 1;
 		type = declarator(1, CAUTO, name, &prim, &size, &dummy,
-				&dummy);
+				&dummy, &dummy);
 		if ((utype && TARRAY == Types[utype]) || TARRAY == type) {
 			prim = pointerto(prim);
 			type = TVARIABLE;
@@ -299,7 +299,7 @@ int pointerto(int prim) {
  */
 
 static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
-			int *pval, int *pinit)
+			int *pval, int *pinit, int *poff)
 {
 	int	type = TVARIABLE;
 	int	ptrptr = 0;
@@ -343,9 +343,12 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 			error(unsupp, NULL);
 		Token = scan();
 		if (ptrtype1(*pprim)) {
-			*pval = ldlabexpr();
+			*pval = ldlabexpr(pinit, poff);
+		} else if (ptrtype2(*pprim)) {
+			*pval = ldlabexpr(pinit, poff);
 		} else {
-			*pval = constexpr();
+			//*pval = constexpr();
+			*pval = ldlabexpr(pinit, poff);
 			if (PU8 == *pprim)
 				*pval &= 0xff;
 			else if (PU16 == *pprim)
@@ -354,8 +357,8 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 				*pval &= 0xffffffff;
 			if (*pval && !inttype(*pprim))
 				error("non-zero pointer initialization", NULL);
+			*pinit = OP_LIT;
 		}
-		*pinit = 1;
 	}
 	else if (!pmtr && LPAREN == Token) {
 		if (CTYPE == scls)
@@ -392,7 +395,7 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 							" local arrays"
 							" not supported: %s",
 							name);
-					*pinit = 1;
+					*pinit = OP_LIT;
 				}
 				else if (CEXTERN != scls) {
 					error("automatically-sized array"
@@ -456,7 +459,7 @@ static int localdecls(void) {
 	int	utype, prim, type, size, addr = 0, val, ini;
 	int	stat, extn;
 	int	pbase, rsize;
-	int	sig, unsig;
+	int	sig, unsig, off;
 
 	Nli = 0;
 	utype = 0;
@@ -540,7 +543,7 @@ static int localdecls(void) {
 			size = 1;
 			ini = val = 0;
 			type = declarator(0, CAUTO, name, &prim, &size,
-					&val, &ini);
+					&val, &ini, &off);
 			type = upgrade_array(utype, type, &size);
 			rsize = objsize(prim, type, size);
 			rsize = (rsize + INTSIZE-1) / INTSIZE * INTSIZE;
@@ -614,7 +617,7 @@ static void signature(int fn, int from, int to) {
 void decl(int clss, int prim, int utype) {
 	char	name[NAMELEN+1];
 	int	pbase, type, size = 0, val, init;
-	int	lsize;
+	int	lsize, off;
 	int loop = 0;
 	pbase = prim;
 	name[0] = '\0';
@@ -622,18 +625,19 @@ void decl(int clss, int prim, int utype) {
 		prim = pbase;
 		val = 0;
 		init = 0;
-		type = declarator(0, clss, name, &prim, &size, &val, &init);
+		type = declarator(0, clss, name, &prim, &size, 
+				&val, &init, &off);
 		type = upgrade_array(utype, type, &size);
 		if (TFUNCTION == type) {
 			clss = clss == CSTATIC? CSPROTO: CEXTERN;
 			Thisfn = addglob(name, prim, type, clss, size, 0,
-					NULL, 0);
+					NULL, 0, 0);
 			signature(Thisfn, Locs, NSYMBOLS);
 			if (LBRACE == Token) {
 				clss = clss == CSPROTO? CSTATIC:
 					clss == CEXTERN? CPUBLIC: clss;
 				Thisfn = addglob(name, prim, type, clss, size,
-					0, NULL, 0);
+					0, NULL, 0, 0);
 				Token = scan();
 				lsize = localdecls();
 				gentext();
@@ -660,7 +664,7 @@ void decl(int clss, int prim, int utype) {
 		if (CEXTERN == clss && init) {
 			error("initialization of 'extern': %s", name);
 		}
-		addglob(name, prim, type, clss, size, val, NULL, init);
+		addglob(name, prim, type, clss, size, val, NULL, init, off);
 		if (COMMA == Token)
 			Token = scan();
 		else
@@ -709,7 +713,7 @@ void structdecl(int clss, int uniondecl) {
 		return;
 	}
 	y = addglob(sname, uniondecl? PUNION: PSTRUCT, TSTRUCT,
-			CMEMBER, 0, 0, NULL, 0);
+			CMEMBER, 0, 0, NULL, 0, 0);
 	Token = scan();
 	utype = 0;
 	align = 0;
@@ -757,7 +761,7 @@ void structdecl(int clss, int uniondecl) {
 			if (eofcheck()) return;
 			prim = base;
 			type = declarator(1, CMEMBER, name, &prim, &size,
-						&dummy, &dummy);
+						&dummy, &dummy, &dummy);
 			align = size;
 			size = objsize(prim, type, size);
 			if (align > 1) {
@@ -773,7 +777,7 @@ void structdecl(int clss, int uniondecl) {
 				maxalign = align;
 			}
 			addglob(name, prim, type, CMEMBER, size, addr,
-				NULL, 0);
+				NULL, 0, 0);
 			if (size < 1)
 				error("size of struct/union member"
 					" is unknown: %s",
@@ -967,7 +971,7 @@ void defarg(char *s) {
 		*p++ = 0;
 	else
 		p = "";
-	addglob(s, 0, TMACRO, 0, 0, 0, globname(p), 0);
+	addglob(s, 0, TMACRO, 0, 0, 0, globname(p), 0, 0);
 	if (*p) *--p = '=';
 }
 

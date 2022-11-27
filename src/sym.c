@@ -137,7 +137,7 @@ char *locname(char *s) {
 }
 
 static void defglob(char *name, int prim, int type, int size, int val,
-			int scls, int init)
+			int scls, int init, int off)
 {
 	int	st;
 
@@ -151,6 +151,10 @@ static void defglob(char *name, int prim, int type, int size, int val,
 	if (prim & STCMASK) {
 		if (TARRAY == type)
 			genbss(gsym(name), objsize(prim, TARRAY, size), st);
+		else if (OP_ADDR == init && val) 
+			gendefl(gsym(name), val, 0);	
+		else if (OP_ADD == init && val) 
+			gendefl(gsym(name), val, off);	
 		else
 			genbss(gsym(name), objsize(prim, TVARIABLE, size), st);
 	}
@@ -215,7 +219,7 @@ int redeclare(char *name, int oldcls, int newcls) {
 }
 
 int addglob(char *name, int prim, int type, int scls, int size, int val,
-		char *mtext, int init)
+		char *mtext, int init, int off)
 {
 	int	y;
 	char 	*stext;
@@ -244,7 +248,7 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 				name);
 	}
 	if (CPUBLIC == scls || CSTATIC == scls)
-		defglob(name, prim, type, size, val, scls, init);
+		defglob(name, prim, type, size, val, scls, init, off);
 	Prims[y] = prim;
 	Types[y] = type;
 	Stcls[y] = scls;

@@ -30,8 +30,9 @@ typedef struct s1 {
 
 extern s1 *a, *b, *c;
 
-s1 de;
-s1 *ptr = &de;
+s1 de1;
+s1 de[3];
+s1 *ptr = &de[1];
 
 int mix(int *ii, long f, ...)
 {
@@ -53,6 +54,7 @@ int main()
 	char *p2 = "jhnkjhjk\n";
 	printf("char %d\n%s", sizeof(s), p, p2);
 	printf("char + int %d\n", sizeof(s1));
+	printf("de %d %d\n", &de[1] , ptr);
 //	mix(NULL, 1);
 	return 0;
 }

@@ -258,6 +258,8 @@ void cgdefb(int v)	{ ngen("%s\t%d", ".byte", v); }
 void cgdefw(int v)	{ ngen("%s\t%d", ".long", v); }
 void cgdefp(int v)	{ ngen("%s\t%d", ".long", v); }
 void cgdefl(int v)	{ lgen("%s\t%c%d", ".long", v); }
+void cgdefs(char *s, int o)	{ genraw("\t.long\t");
+			  	  ngen("%s + %d", s, o); }
 void cgdefc(int c)	{ ngen("%s\t'%c'", ".byte", c); }
 void cggbss(char *s, int z)	{ ngen(".comm\t%s,%d", s, z); }
 void cglbss(char *s, int z)	{ ngen(".lcomm\t%s,%d", s, z); }

@@ -4,7 +4,7 @@
  */
 
 int	addglob(char *name, int prim, int type, int scls, int size, int val,
-		char *mval, int init);
+		char *mval, int init, int off);
 int	addloc(char *name, int prim, int type, int scls, int size, int val,
 		int init);
 int	binoptype(int op, int p1, int p2);
@@ -20,6 +20,7 @@ void	compound(int lbr);
 int	comptype(int p);
 int	constexpr(void);
 void	copyname(char *name, char *s);
+void	defarg(char  *p);
 int	deref(int p);
 void	dumpsyms(char *title, char *sub, int from, int to);
 void	dumptree(node *a);
@@ -53,6 +54,7 @@ void	gencalr(void);
 void	gencmp(char *inst);
 void	gendata(void);
 void	gendefb(int v);
+void	gendefl(char *name, int v, int off);
 void	gendefp(int v);
 void	gendefs(char *s, int len);
 void	gendefw(int v);
@@ -103,7 +105,7 @@ int	inttype(int p);
 int	label(void);
 char	*labname(int id);
 void	lbrace(void);
-int	ldlabexpr(void);
+int	ldlabexpr(int *op, int *off);
 void	lgen(char *s, char *inst, int n);
 void	lgen2(char *s, int v1, int v2);
 void	load(void);
@@ -129,6 +131,7 @@ int	pointerto(int prim);
 void	preproc(void);
 int	primtype(int t, char *s);
 int	ptrtype1(int p);
+int	ptrtype2(int p);
 void	program(char *name, FILE *in, FILE *out, char *def);
 void	putback(int t);
 void	queue_cmp(int op);

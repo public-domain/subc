@@ -772,6 +772,11 @@ void genswitch(int *vals, int *labs, int nc, int dflt) {
 
 /* assigments */
 
+void gendefl(char *name, int lab, int off) {
+	cgname(name);
+	cgdefs(gsym(Names[lab]), off);
+}
+
 void genstore(int *lv) {
 	if (NULL == lv) return;
 	gentext();

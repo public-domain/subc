@@ -49,7 +49,7 @@ static node *primary(int *lv) {
 		if (!y) {
 			if (LPAREN == Token) {
 				y = addglob(name, PINT, TFUNCTION, CEXTERN,
-					-1, 0, NULL, 0);
+					-1, 0, NULL, 0, 0);
 			}
 			else {
 				error("undeclared variable: %s", name);
@@ -936,7 +936,7 @@ int constexpr(void) {
 	return n->args[0];
 }
 
-int ldlabexpr(void) {
+int ldlabexpr(int *op, int *off) {
 	node	*n;
 	int	lv[LV];
 
@@ -944,13 +944,17 @@ int ldlabexpr(void) {
 	n = binexpr(lv);
 	notvoid(lv[LVPRIM]);
 	n = fold_reduce(n);
-	if (NULL == n || ( OP_LDLAB != n->op && OP_LIT != n->op)) {
-		error("constant initializer expected", NULL);
+	if (NULL == n || (OP_ADDR != n->op && OP_LDLAB != n->op && 
+				OP_LIT != n->op && OP_ADD != n->op)) 
+	{
+		error("initializer expected", NULL);
 		return 0;
 	}
-	if (OP_LIT == n->op && n->args[0] != 0) {
-		error("pointer can only be inialized by NULL", NULL);
-		return 0;
+	*op = n->op;
+	*off = 0;
+	if (OP_ADD == n->op) {
+		*off = n->right->args[0];
+		return n->left->args[0];
 	}
 	return n->args[0];
 }

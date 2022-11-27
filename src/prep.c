@@ -259,7 +259,7 @@ static void defmac(void) {
 			error("macro redefinition: %s", name);
 	}
 	else {
-		addglob(name, 0, TMACRO, 0, 0, 0, globname(p), 0);
+		addglob(name, 0, TMACRO, 0, 0, 0, globname(p), 0, 0);
 	}
 	Line++;
 }

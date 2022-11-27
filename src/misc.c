@@ -29,10 +29,10 @@ void init(void) {
 	Q_type = empty;
 	Q_cmp = cnone;
 	Q_bool = bnone;
-	addglob("", 0, 0, 0, 0, 0, NULL, 0);
+	addglob("", 0, 0, 0, 0, 0, NULL, 0, 0);
 	defines = DEFINES;
 	while (defines[0]) {
-		addglob(defines, 0, TMACRO, 0, 0, 0, globname(""), 0);
+		defarg(defines);
 		defines += strlen(defines) + 1;
 	}
 	Infile = stdin;
@@ -111,6 +111,8 @@ int inttype(int p) {
 
 int ptrtype1(int p)
 {
+	int y;
+	y = p & STCMASK;
 	return UCHARPTR == p ||
                CHARPTR == p ||
                INTPTR == p ||
@@ -118,8 +120,28 @@ int ptrtype1(int p)
                LONGPTR == p ||
                ULONGPTR == p ||
                SHORTPTR == p ||
-               USHORTPTR == p;
+               USHORTPTR == p ||
+               STCPTR == y ||
+               UNIPTR == y ||
+	       FUNPTR == p;
 }
+
+int ptrtype2(int p)
+{
+	int y;
+	y = p & STCMASK;
+	return UCHARPP == p ||
+               CHARPP == p ||
+               INTPP == p ||
+               UINTPP == p ||
+               LONGPP == p ||
+               ULONGPP == p ||
+               SHORTPP == p ||
+               USHORTPP == p ||
+               STCPP == y ||
+               UNIPP == y;
+}
+
 
 int unsigtype(int p) {
 	if (!inttype(p)) {

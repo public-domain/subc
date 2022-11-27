@@ -55,6 +55,7 @@ void cgdefb(int v);
 void cgdefc(int c);
 void cgdefl(int v);
 void cgdefp(int v);
+void cgdefs(char *name, int off);
 void cgdefw(int v);
 void cgdefd(int v);
 void cgdefq(int v);
