@@ -317,7 +317,7 @@ static int macro(char *name) {
 	y = findmac(name);
 	if (!y || Mtext[y] == NULL)
 		return 0;
-	playmac(Mtext[y]);
+	playmac(y);
 	return 1;
 }
 

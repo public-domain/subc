@@ -13,7 +13,7 @@ struct MacroBuf {
 	char args[TEXTLEN+1];
 };
 
-static struct MacroBuf Macexp[MAXFNARGS];
+static struct MacroBuf Macexp[MAXFNARGS * MAXNMAC];
 
 static int p_primary();
 
@@ -54,7 +54,7 @@ static int append(int k, char *buf, char *s, int maxlen, int quote) {
 }
 
 static int replace(int na, int k, char *buf, int maxlen) {
-	int i;
+	int i, r;
 	int q = 0;
 	char *tok;
 	tok = buf + k;
@@ -63,17 +63,26 @@ static int replace(int na, int k, char *buf, int maxlen) {
 		q = 1;
 	}
 	for (i = 0; i < na; i++) {
-		if (!strcmp(tok, Macexp[i].params)) {
+		if (!strcmp(tok, Macexp[i + Mp * MAXFNARGS].params)) {
 			buf[k] = '\0';
-			return append(k, buf, Macexp[i].args, maxlen, q);
+			r = append(k, buf, 
+				Macexp[i + Mp * MAXFNARGS].args, maxlen, q);
+			return r;
 		}
 	}
 	return strlen(buf);
 }
 
 static char *expandbody(char *s, int na) {
-	static char buf[TEXTLEN+1];
+	static char buffer[(TEXTLEN+1) * MAXNMAC];
+	static int inc = 0;
+	char *buf;
 	int c, ni, i;
+
+	/* FIXME : we must allocate the buffer... */	
+	inc++;
+	if (inc >= MAXNMAC) inc = 0;
+	buf = buffer + (TEXTLEN+1) * inc;
 
 	buf[0] = '\0';
 	ni = 0;
@@ -127,33 +136,54 @@ static char *expandbody(char *s, int na) {
 	if (ni < i) {
 		replace(na, ni, buf, TEXTLEN);
 	}
-	/* printf("XPND: %s\n", buf); */
+	/*printf("JML XPND: %s\n", buf); */
 	return buf;
 }
 
 static int getargs(void) {
 	int l, na, k;
+	int pm;
+	int spc;
+
+	spc = 0;
+	pm = Mp;
 	Token = scanraw();
-	if (Token != LPAREN) fatal("missing '(' after macro name");
+	if (Token != LPAREN) fatal("#ERR018 missing '(' after macro name");
 	l = 1;
 	na = 0;
 	k = 0;
-	Macexp[na].args[k] = '\0';
+	Macexp[na + Mp * MAXFNARGS].args[k] = '\0';
 	while (l > 0  && Token != XEOF && na < MAXFNARGS - 1) {
 		Token = scanraw();
-		if (Token == RPAREN) l--;
-		if (Token == LPAREN) l++;
+		if (Token == RPAREN) {
+			spc = 0; 
+			l--;
+		}
+		if (Token == LPAREN) {
+			spc = 0;
+			l++;
+		}
 		if (Token == COMMA && l == 1) {
 			na++;
 			k = 0;
-			Macexp[na].args[k] = '\0';
+			Macexp[na + Mp * MAXFNARGS].args[k] = '\0';
+			spc = 0;
 		} else if (l > 0) {
-			k = append(k, Macexp[na].args, Text, TEXTLEN, 0);
+			if (spc) {
+				Macexp[na + Mp * MAXFNARGS].args[k] = ' ';
+				k++;
+			}
+			k = append(k, Macexp[na + Mp * MAXFNARGS].args, 
+					Text, TEXTLEN, 0);
+			spc = 1;	
 		} else {
-			if (k != 0) na++;
+			if (k != 0) {
+				spc = 0;
+				na++;
+			}
 		}
 	}
-	Macexp[na].args[k] = '\0';
+	Macexp[na + Mp * MAXFNARGS].args[k] = '\0';
 	if (l != 0) fatal("Missing ')' after macro call");
 	return na;
 }
@@ -164,7 +194,7 @@ static int getparams(char **ps) {
 	s = *ps;
 	np = 0;
 	k = 0;
-	Macexp[np].params[k] = '\0';
+	Macexp[np + Mp * MAXFNARGS].params[k] = '\0';
 	s++;
 	while ('\0' != *s && np < MAXFNARGS - 1) {
 		if (')' == *s) {
@@ -174,15 +204,15 @@ static int getparams(char **ps) {
 		if (',' == *s) {
 			np++;
 			k = 0;
-			Macexp[np].params[k] = '\0';
+			Macexp[np + Mp * MAXFNARGS].params[k] = '\0';
 		} else {
 			if (k >= NAMELEN) 
 				fatal("parameter name too long in macro");
 
 			if (!isspace(*s)) {
-				Macexp[np].params[k] = *s;
+				Macexp[np + Mp * MAXFNARGS].params[k] = *s;
 				k++;
-				Macexp[np].params[k] = '\0';
+				Macexp[np + Mp * MAXFNARGS].params[k] = '\0';
 			}
 		}
 		s++;
@@ -200,13 +230,16 @@ static char *expandmac(char *s) {
 	return expandbody(s, na);
 }
 
-void playmac(char *s) {
+
+void playmac(int y) {
+	char *s;
 	if (Mp >= MAXNMAC) fatal("too many nested macros");
+	s = Mtext[y];
 	if ('(' == s[0]) { 
-		if (Mp > 0) fatal("too many nested function like macros");
 		s = expandmac(s);
 	}
 	Macc[Mp] = next();
+	Mact[Mp] = y;
 	Macp[Mp++] = s;
 }
 

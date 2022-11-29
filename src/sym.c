@@ -45,8 +45,11 @@ int findmac(char *s) {
 	for (i=0; i<Globs; i++)
 		if (	NULL != Mtext[i] &&
 			*s == *Names[i] && !strcmp(s, Names[i])
-		)
+		) {
+			/* dont't expand macro twice */
+			if (Mp > 0 && Mact[Mp-1] == i) return 0;
 			return i;
+		}
 	return 0;
 }
 
@@ -333,15 +336,21 @@ int objsize(int prim, int type, int size) {
 		k = LONGSIZE;
 	else if (PULONG == prim)
 		k = ULONGSIZE;
+	else if (PDOUBLE == prim)
+		k = DOUBLESIZE;
+	else if (PFLOAT == prim)
+		k = FLOATSIZE;
 	else if (INTPTR == prim || UCHARPTR == prim || VOIDPTR == prim ||
 			UINTPTR == prim || CHARPTR == prim ||
 			SHORTPTR == prim || LONGPTR == prim ||
-			USHORTPTR == prim || ULONGPTR == prim)
+			USHORTPTR == prim || ULONGPTR == prim ||
+			DOUBLEPTR == prim || FLOATPTR == prim)
 		k = PTRSIZE;
 	else if (INTPP == prim || UCHARPP == prim || VOIDPP == prim ||
 			UINTPP == prim || CHARPP == prim ||
 			SHORTPP == prim || LONGPP == prim ||
-			USHORTPP == prim || ULONGPP == prim)
+			USHORTPP == prim || ULONGPP == prim ||
+			DOUBLEPP == prim || FLOATPP == prim)
 		k = PTRSIZE;
 	else if (STCPTR == sp || STCPP == sp)
 		k = PTRSIZE;
@@ -375,6 +384,8 @@ static char *typename(int p) {
 		PUSHORT == p? "USHORT":
 		PLONG == p? "LONG":
 		PULONG == p? "ULONG":
+		PDOUBLE == p? "DOUBLE":
+		PFLOAT == p? "FLOAT":
 		INTPTR  == p? "INT*":
 		UCHARPTR == p? "UCHAR*":
 		CHARPTR   == p? "CHAR":
@@ -383,16 +394,20 @@ static char *typename(int p) {
 		USHORTPTR == p? "USHORT*":
 		LONGPTR == p? "LONG*":
 		ULONGPTR == p? "ULONG*":
+		DOUBLEPTR == p? "DOUBLE*":
+		FLOATPTR == p? "FLOAT*":
 		VOIDPTR == p? "VOID*":
 		FUNPTR  == p? "FUN*":
 		INTPP   == p? "INT**":
 		UCHARPP  == p? "UCHAR**":
-		CHARPP   == p? "CHAR*":
-		UINTPP   == p? "UINT*":
-		SHORTPP == p? "SHORT*":
-		USHORTPP == p? "USHORT*":
-		LONGPP == p? "LONG*":
+		CHARPP   == p? "CHAR**":
+		UINTPP   == p? "UINT**":
+		SHORTPP == p? "SHORT**":
+		USHORTPP == p? "USHORT**":
+		LONGPP == p? "LONG**":
 		ULONGPP == p? "ULONG*":
+		DOUBLEPP == p? "DOUBLE**":
+		FLOATPP == p? "FLOAT**":
 		VOIDPP  == p? "VOID**":
 		PVOID   == p? "VOID": "n/a";
 }

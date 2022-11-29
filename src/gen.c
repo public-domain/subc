@@ -361,11 +361,19 @@ static void binopchk(int op, int p1, int p2) {
 		 GREATER == op || LTEQ == op || GTEQ == op)
 		&&
 		(p1 == p2 ||
-		 (VOIDPTR == p1 && !inttype(p2)) ||
-		 (VOIDPTR == p2 && !inttype(p1)))
+		 (ptrtype(p1) && ptrtype(p2)) ||
+		 (ptrtype(p1) && objsize(p2, 0, 0) == PTRSIZE) ||
+		 (ptrtype(p2) && objsize(p1, 0, 0) == PTRSIZE))
 	)
 		return;
-	error("invalid operands to binary operator", NULL);
+	else if ((PLUS == op || MINUS == op)
+		&&
+		((ptrtype(p1) && inttype(p2)) ||
+		 (ptrtype(p2) && inttype(p1))
+		))
+		return;
+	fprintf(stderr, "JML op %d %d %d\n", op, p1, p2);
+	error("ERR016 invalid operands to binary operator", NULL);
 }
 
 void commit_cmp(void) {

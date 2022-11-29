@@ -31,7 +31,7 @@
 #define MAXFILES	32
 
 #define MAXIFDEF	16
-#define MAXNMAC		2048
+#define MAXNMAC		32
 #define MAXCASE		256
 #define MAXBREAK	16
 #define MAXLOCINIT	32
@@ -59,11 +59,11 @@ enum {
 	PU16,
 	PI16,
 	PU32,
-	PI32,
+	PI32, /* 5 */
 	PU64,
 	PI64,
 	PF32,
-	PF64,
+	PF64, /* 10 */
 	U8PTR,
 	I8PTR,
 	U16PTR,
@@ -73,7 +73,7 @@ enum {
 	U64PTR,
 	I64PTR,
 	F32PTR,
-	F64PTR,
+	F64PTR, /* 20 */
 	U8PP,
 	I8PP,
 	U16PP,
@@ -83,7 +83,7 @@ enum {
 	U64PP,
 	I64PP,
 	F32PP,
-	F64PP,
+	F64PP, /* 30 */
 	PVOID,
 	VOIDPTR,
 	VOIDPP,

@@ -123,6 +123,7 @@ int ptrtype1(int p)
                USHORTPTR == p ||
                STCPTR == y ||
                UNIPTR == y ||
+               VOIDPTR == p ||
 	       FUNPTR == p;
 }
 
@@ -138,10 +139,16 @@ int ptrtype2(int p)
                ULONGPP == p ||
                SHORTPP == p ||
                USHORTPP == p ||
+               VOIDPP == p ||
                STCPP == y ||
                UNIPP == y;
 }
 
+int ptrtype(int p) {
+	if (ptrtype1(p)) return 1;
+	if (ptrtype2(p)) return 1;
+	return 0;
+}
 
 int unsigtype(int p) {
 	if (!inttype(p)) {

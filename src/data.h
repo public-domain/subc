@@ -23,6 +23,7 @@ extern_ char	*File;
 extern_ char	*Basefile;
 extern_ char	*Macp[MAXNMAC];
 extern_ int	Macc[MAXNMAC];
+extern_ int	Mact[MAXNMAC];
 extern_ int	Mp;
 extern_ int	Expandmac;
 extern_ int	Ifdefstk[MAXIFDEF], Isp;

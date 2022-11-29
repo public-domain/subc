@@ -198,6 +198,7 @@ static int pmtrdecls(void) {
 			if (	CHAR == Token || INT == Token ||
 				VOID == Token || UNSIGNED == Token ||
 				SIGNED == Token || LONG == Token ||
+				DOUBLE == Token || FLOAT == Token ||
 				SHORT == Token || CONST == Token ||
 				STRUCT == Token || UNION == Token ||
 				(IDENT == Token && utype != 0)
@@ -262,7 +263,11 @@ static int pmtrdecls(void) {
 int pointerto(int prim) {
 	int	y;
 
-	if (UCHARPP == prim || INTPP == prim || UINTPP == prim ||
+	if (U8PP == prim || I8PP == prim || 
+	    U16PP == prim || I16PP == prim ||
+	    U32PP == prim || I32PP == prim ||
+	    U64PP == prim || I64PP == prim ||
+	    F32PP == prim || F64PP == prim ||
 	    VOIDPP == prim ||
 	    FUNPTR == prim ||
 	    (prim & STCMASK) == STCPP || (prim & STCMASK) == UNIPP
@@ -275,12 +280,27 @@ int pointerto(int prim) {
 	case PUNION:	return UNIPTR | y;
 	case UNIPTR:	return UNIPP | y;
 	}
-	return PINT == prim? INTPTR:
-		PUCHAR == prim? UCHARPTR:
-		PVOID == prim? VOIDPTR:
-		INTPTR == prim? INTPP:
-		UINTPTR == prim? UINTPP:
-		UCHARPTR == prim? UCHARPP: VOIDPP;
+	return PI8 == prim? I8PTR:
+		I8PTR == prim? I8PP:
+		PI16 == prim? I16PTR:
+		I16PTR == prim? I16PP:
+		PI32 == prim? I32PTR:
+		I32PTR == prim? I32PP:
+		PI64 == prim? I64PTR:
+		I64PTR == prim? I64PP:
+		PU8 == prim? U8PTR:
+		U8PTR == prim? U8PP:
+		PU16 == prim? U16PTR:
+		U16PTR == prim? U16PP:
+		PU32 == prim? U32PTR:
+		U32PTR == prim? U32PP:
+		PU64 == prim? U64PTR:
+		U64PTR == prim? U64PP:
+		PF64 == prim? F64PTR:
+		F64PTR == prim? F64PP:
+		PF32 == prim? F32PTR:
+		F32PTR == prim? F32PP:
+		PVOID == prim? VOIDPTR: VOIDPP;
 }
 
 /*
@@ -467,6 +487,7 @@ static int localdecls(void) {
 		STATIC == Token || VOLATILE == Token || CONST == Token ||
 		INT == Token || UNSIGNED == Token || SIGNED == Token ||
 		LONG == Token || SHORT == Token ||
+		DOUBLE == Token || FLOAT == Token ||
 		CHAR == Token || VOID == Token ||
 		ENUM == Token ||
 		STRUCT == Token || UNION == Token ||
@@ -490,6 +511,7 @@ static int localdecls(void) {
 			if (	INT == Token || CHAR == Token ||
 				VOID == Token ||
 				LONG == Token || SHORT == Token ||
+				DOUBLE == Token || FLOAT == Token ||
 				STRUCT == Token || UNION == Token
 			) {
 				prim = primtype(Token, NULL);
@@ -720,6 +742,7 @@ void structdecl(int clss, int uniondecl) {
 	maxalign = 1;
 	while (	INT == Token || CHAR == Token || VOID == Token ||
 		LONG == Token || SHORT == Token || CONST == Token ||
+		DOUBLE == Token || FLOAT == Token ||
 		SIGNED == Token || UNSIGNED == Token ||
 		STRUCT == Token || UNION == Token ||
 		(IDENT == Token && (utype = usertype(Text)) != 0)

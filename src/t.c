@@ -34,27 +34,47 @@ s1 de1;
 s1 de[3];
 s1 *ptr = &de[1];
 
-int mix(int *ii, long f, ...)
+typedef unsigned int size_tt;
+
+int mix(size_tt *ii, long f, ...)
 {
+	char *p;
+	char *p1;
 	printf("MIXXXX\n");
+	p = p1 + *ii;
 	return 0;
 }
 
-int mix1() {
+int mix2() {
 	printf("MIX11111111\n");
 	return 1;
 }
 
-#define mix(a,b) mix1()
-
+#define mix3(q) mix2a(q); mix2b(q); mix2c(q)
+#define mix1(a) mix3("bos"); mix3(a) ; mix3("yo")
+#define mix(a,b) mix1(a)
+#define mit(a) a
 
 int main()
 {
+	int i;
 	char *p = "Tera miy\n";
 	char *p2 = "jhnkjhjk\n";
+	mit(const char *) p3 = "jml";
+
 	printf("char %d\n%s", sizeof(s), p, p2);
 	printf("char + int %d\n", sizeof(s1));
 	printf("de %d %d\n", &de[1] , ptr);
-//	mix(NULL, 1);
+	//mix(0, 1);
+	//mix1(0);
+	*(&(p2)) = 1, mix2();
+	i = (size_tt)( (int*)p - 0) + 1;
+	if (p > de){
+	 	int z;
+	  	z = 0;	
+		return 1;
+	}
+	//printf("%s\n", p2);
+	//
 	return 0;
 }

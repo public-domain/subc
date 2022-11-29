@@ -74,8 +74,9 @@ static node *primary(int *lv) {
 			lv[LVPRIM] = pointerto(lv[LVPRIM]);
 			return n;
 		}
-		if (CTYPE == Stcls[y])
-			error("invalid use of typedef type", Text);
+		if (CTYPE == Stcls[y]) {
+			error("#ERR015 invalid use of typedef type", Text);
+		}
 		if (comptype(Prims[y])) {
 			n = mkleaf(OP_ADDR, y);
 			lv[LVSYM] = 0;
@@ -110,7 +111,7 @@ static node *primary(int *lv) {
 		rparen();
 		return n;
 	default:
-		error("syntax error at: %s", Text);
+		error("#ERR021 syntax error at: %s", Text);
 		Token = synch(SEMI);
 		return NULL;
 	}
@@ -121,6 +122,9 @@ int typematch(int p1, int p2) {
 	if (inttype(p1) && inttype(p2)) return 1;
 	if (!inttype(p1) && VOIDPTR == p2) return 1;
 	if (VOIDPTR == p1 && !inttype(p2)) return 1;
+	/* FIXME add warning */
+	if ((ptrtype1(p1) || ptrtype2(p1)) && inttype(p2)) return 1;
+	if ((ptrtype1(p2) || ptrtype2(p2)) && inttype(p1)) return 1;
 	return 0;
 }
 
@@ -178,15 +182,28 @@ int deref(int p) {
 	int	y;
 
 	switch (p) {
-	case INTPP:	return INTPTR;
-	case INTPTR:	return PINT;
-	case UINTPP:	return UINTPTR;
-	case UINTPTR:	return PUINT;
-	case UCHARPP:	return UCHARPTR;
-	case UCHARPTR:	return PUCHAR;
 	case VOIDPP:	return VOIDPTR;
-	case VOIDPTR:	return PUCHAR;
-	case FUNPTR:	return PUCHAR;
+	case VOIDPTR:	return PVOID;
+	case I8PP:	return I8PTR;
+	case I8PTR:	return PI8;
+	case U8PP:	return U8PTR;
+	case U8PTR:	return PU8;
+	case I16PP:	return I16PTR;
+	case I16PTR:	return PI16;
+	case U16PP:	return U16PTR;
+	case U16PTR:	return PU16;
+	case I32PP:	return I32PTR;
+	case I32PTR:	return PI32;
+	case U32PP:	return U32PTR;
+	case U32PTR:	return PU32;
+	case I64PP:	return I64PTR;
+	case I64PTR:	return PI64;
+	case U64PP:	return U64PTR;
+	case U64PTR:	return PU64;
+	case F32PP:	return F32PTR;
+	case F32PTR:	return PF32;
+	case F64PP:	return F64PTR;
+	case F64PTR:	return PF64;
 	}
 	y = p & ~STCMASK;
 	switch (p & STCMASK) {
@@ -206,10 +223,10 @@ static node *indirection(node *n, int *lv) {
 		error("dereferencing void pointer", NULL);
 	if ((p = deref(lv[LVPRIM])) < 0) {
 		if (lv[LVSYM])
-			error("indirection through non-pointer: %s",
+			error("#ERR019 indirection through non-pointer: %s",
 				Names[lv[LVSYM]]);
 		else
-			error("indirection through non-pointer", NULL);
+			error("#ERR020 indirection through non-pointer", NULL);
 		p = lv[LVPRIM];
 	}
 	lv[LVPRIM] = p;
@@ -378,6 +395,7 @@ static node *comp_size(void) {
 	if (	CHAR == Token || INT == Token || VOID == Token ||
 		UNSIGNED == Token || SIGNED == Token ||
 		SHORT == Token || LONG == Token ||
+		DOUBLE == Token || FLOAT == Token ||
 		STRUCT == Token || UNION == Token ||
                 (IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
@@ -395,6 +413,8 @@ static node *comp_size(void) {
 			case INT:	k = INTSIZE; noscan = 0; break;
 			case LONG:	k = LONGSIZE; noscan = 0; break;
 			case SHORT:	k = SHORTSIZE; noscan = 0; break;
+			case DOUBLE:	k = DOUBLESIZE; noscan = 0; break;
+			case FLOAT:	k = FLOATSIZE; noscan = 0; break;
 			case STRUCT:
 			case UNION:	k = primtype(Token, NULL);
 					k = objsize(k, TVARIABLE, 1);
@@ -551,7 +571,7 @@ static node *prefix(int *lv) {
  */
 
 static node *cast(int *lv) {
-	int	t;
+	int	t, y, utype;
 	node	*n;
 	
 	t = 0;
@@ -567,8 +587,12 @@ static node *cast(int *lv) {
 			Token = scan();
 			t = PINT;
 		}
+		if (IDENT == Token) {
+			y = findsym(Text);
+		}
 		if (	INT == Token || CHAR == Token || VOID == Token ||
 			LONG == Token || SHORT == Token ||
+			DOUBLE == Token || FLOAT == Token ||
 			STRUCT == Token || UNION == Token
 		) {
 			if (PUINT == t) {
@@ -579,6 +603,9 @@ static node *cast(int *lv) {
 				t = primtype(Token, NULL);
 			}
 			Token = scan();
+		} else if (IDENT == Token && (utype = usertype(Text)) != 0) { 
+			Token = scan();
+			t = Prims[utype];
 		} else if (t == 0) {
 			reject();
 			Token = LPAREN;
@@ -827,7 +854,7 @@ int arithop(int tok) {
 	case ASDIV:	return SLASH;
 	case ASLSHIFT:	return LSHIFT;
 	case ASRSHIFT:	return RSHIFT;
-	default:	fatal("internal: unknown assignment operator");
+	default:	fatal("internal: #ERR012 unknown assignment operator");
 			return 0; /* notreached */
 	}
 }
@@ -863,9 +890,10 @@ static node *asgmnt(int *lv) {
 		n2 = asgmnt(lv2);
 		n2 = rvalue(n2, lv2);
 		if (ASSIGN == op) {
-			if (!typematch(lv[LVPRIM], lv2[LVPRIM]))
-				error("assignment from incompatible type",
+			if (!typematch(lv[LVPRIM], lv2[LVPRIM])) {
+				error("#ERR013 assignment from incompatible type",
 					NULL);
+			}
 			n = mkbinop2(OP_ASSIGN, lv[LVPRIM], lv[LVSYM], n, n2);
 		}
 		else {
@@ -876,7 +904,7 @@ static node *asgmnt(int *lv) {
 			n = mkbinop2(OP_ASSIGN, lv[LVPRIM], lv[LVSYM], n, n2);
 		}
 		if (!lv[LVADDR])
-			error("lvalue expected in assignment", Text);
+			error("#ERR014 lvalue expected in assignment", Text);
 		lv[LVADDR] = 0;
 	}
 	return n;
