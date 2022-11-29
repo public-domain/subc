@@ -250,7 +250,9 @@ void cgname(char *s)	{ genraw(s);
 void cgentry(char *s)	{ genraw(s);
 			  genraw(":");
 			  gen("pushl\t%ebp");
-			  gen("movl\t%esp,%ebp"); }
+			  gen("movl\t%esp,%ebp"); 
+			  sgen("%s\t$Const%s,%%esp", "addl", s); }
+void cgset(char *s, int n) 	{ ngen(".set Const%s,%d", s, n); }
 void cgexit(void)	{ gen("popl\t%ebp");
 			  gen("ret"); }
 

@@ -139,6 +139,7 @@ void cgscale(void);
 void cgscale2(void);
 void cgscale2by(int v);
 void cgscaleby(int v);
+void cgset(char *s, int v);
 void cgshl(void);
 void cgshr(void);
 void cgstack(int n);

@@ -20,7 +20,16 @@ static void stmt(void);
  */
 
 void compound(int lbr) {
+	int lsize, start;
 	if (lbr) Token = scan();
+	start = Nli;
+	lsize = localdecls(Thislsize);
+	if (start != Nli) {
+		gentext();
+		genaligntext();
+		genlocinit(start);
+	}
+	Thislsize = lsize;
 	while (RBRACE != Token) {
 		if (eofcheck()) return;
 		stmt();

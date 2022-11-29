@@ -973,9 +973,12 @@ int ldlabexpr(int *op, int *off) {
 	notvoid(lv[LVPRIM]);
 	n = fold_reduce(n);
 	if (NULL == n || (OP_ADDR != n->op && OP_LDLAB != n->op && 
-				OP_LIT != n->op && OP_ADD != n->op)) 
+				OP_LIT != n->op && OP_ADD != n->op &&
+				OP_IDENT != n->op)) 
 	{
-		error("initializer expected", NULL);
+		fprintf(stderr, "JML IO %d\n",n);
+		fprintf(stderr, "JML IO %d\n",n->op);
+		error("#ERR022 initializer expected", NULL);
 		return 0;
 	}
 	*op = n->op;
@@ -983,6 +986,8 @@ int ldlabexpr(int *op, int *off) {
 	if (OP_ADD == n->op) {
 		*off = n->right->args[0];
 		return n->left->args[0];
+	} else if (OP_IDENT == n->op) {
+
 	}
 	return n->args[0];
 }

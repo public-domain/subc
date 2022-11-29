@@ -227,6 +227,18 @@ static int pmtrdecls(void) {
 					} else {
 						prim = PINT;
 					}
+				} else if (SHORT == Token) {
+					prim = PSHORT;
+					Token = scan();
+					if (INT == Token) {
+						Token = scan();
+					}
+				} else if (LONG == Token) {
+					prim = PLONG;
+					Token = scan();
+					if (INT == Token) {
+						Token = scan();
+					}
 				} else {
 					prim = utype? Prims[utype]:
 						primtype(Token, NULL);
@@ -362,12 +374,9 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		if (CTYPE == scls)
 			error(unsupp, NULL);
 		Token = scan();
-		if (ptrtype1(*pprim)) {
-			*pval = ldlabexpr(pinit, poff);
-		} else if (ptrtype2(*pprim)) {
+		if (ptrtype(*pprim)) {
 			*pval = ldlabexpr(pinit, poff);
 		} else {
-			//*pval = constexpr();
 			*pval = ldlabexpr(pinit, poff);
 			if (PU8 == *pprim)
 				*pval &= 0xff;
@@ -474,14 +483,13 @@ int upgrade_array(int utype, int type, int *size) {
  *	| declarator , ldecl_list
  */
 
-static int localdecls(void) {
+int localdecls(int addr) {
 	char	name[NAMELEN+1];
-	int	utype, prim, type, size, addr = 0, val, ini;
+	int	utype, prim, type, size, val, ini;
 	int	stat, extn;
 	int	pbase, rsize;
 	int	sig, unsig, off;
 
-	Nli = 0;
 	utype = 0;
 	while ( AUTO == Token || EXTERN == Token || REGISTER == Token ||
 		STATIC == Token || VOLATILE == Token || CONST == Token ||
@@ -510,12 +518,23 @@ static int localdecls(void) {
 			Token = scan();
 			if (	INT == Token || CHAR == Token ||
 				VOID == Token ||
-				LONG == Token || SHORT == Token ||
 				DOUBLE == Token || FLOAT == Token ||
 				STRUCT == Token || UNION == Token
 			) {
 				prim = primtype(Token, NULL);
 				Token = scan();
+			} else if (SHORT == Token) {
+				prim = primtype(Token, NULL);
+				Token = scan();
+				if (INT == Token) {
+					Token = scan();
+				}
+			} else if (LONG == Token) {
+				prim = primtype(Token, NULL);
+				Token = scan();
+				if (INT == Token) {
+					Token = scan();
+				}
 			} else if (UNSIGNED == Token) {
 				unsig = 1;
 			} else if (SIGNED == Token) {
@@ -532,8 +551,13 @@ static int localdecls(void) {
 		} else if (utype) {
 			prim = Prims[utype];
 			Token = scan();
-		}
-		else {
+		} else if (LONG == Token || SHORT == Token) {
+			prim = primtype(Token, NULL);
+			Token = scan();
+			if (INT == Token) {
+				Token = scan();
+			}
+		} else {
 			prim = primtype(Token, NULL);
 			Token = scan();
 		}
@@ -590,6 +614,7 @@ static int localdecls(void) {
 				}
 				LIaddr[Nli] = addr;
 				LItype[Nli] = prim;
+				LIini[Nli] = ini;
 				LIval[Nli++] = val;
 			}
 			if (COMMA == Token)
@@ -661,17 +686,20 @@ void decl(int clss, int prim, int utype) {
 				Thisfn = addglob(name, prim, type, clss, size,
 					0, NULL, 0, 0);
 				Token = scan();
-				lsize = localdecls();
+				//Thislsize = localdecls(0);
+				Nli = 0;
+				Thislsize = 0;
 				gentext();
 				if (CPUBLIC == clss) genpublic(name);
 				genaligntext();
 				genentry(name);
-				genstack(lsize);
-				genlocinit();
+				//genstack(lsize);
+				//genlocinit();
 				Retlab = label();
 				compound(0);
 				genlab(Retlab);
-				genstack(-lsize);
+				genconst(name, Thislsize);
+				genstack(-Thislsize);
 				genexit();
 				if (O_debug & D_LSYM)
 					dumpsyms("LOCALS: ", name, Locs,

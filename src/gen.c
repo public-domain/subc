@@ -577,6 +577,11 @@ void genentry(char *name) {
 	cgentry(gsym(name));
 }
 
+void genconst(char *name, int v)
+{
+	cgset(gsym(name), v);
+}
+
 void genexit(void) {
 	gentext();
 	cgexit();
@@ -602,12 +607,16 @@ void genstack(int n) {
 	}
 }
 
-void genlocinit(void) {
+void genlocinit(int start) {
 	int	i;
-
+	int y;
 	gentext();
-	for (i=0; i<Nli; i++) {
-		if (ptrtype1(LItype[i]) && LIval[i] != 0) {
+	for (i=start; i<Nli; i++) {
+		y = LIval[i];
+		if (OP_IDENT == LIini[i]) { 
+			cgldlw(Vals[LIval[i]]);
+			cgstorlw(LIaddr[i]);
+		} else if (ptrtype1(LItype[i]) && LIval[i] != 0) {
 			cgldsa(LIval[i]);
 			cgstorlw(LIaddr[i]);
 		} else {

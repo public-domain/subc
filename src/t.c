@@ -36,8 +36,9 @@ s1 *ptr = &de[1];
 
 typedef unsigned int size_tt;
 
-int mix(size_tt *ii, long f, ...)
+int mix(size_tt *ii, char *q, char *f, ...)
 {
+	/*register*/ char *u = q;
 	char *p;
 	char *p1;
 	printf("MIXXXX\n");
@@ -55,13 +56,21 @@ int mix2() {
 #define mix(a,b) mix1(a)
 #define mit(a) a
 
+void sdmi(char *a, char *b, char *c)
+{
+	char *d = a;
+	char *e = b;
+	char *f = c;
+	printf("SDMI %s %s %s\n", d, e, f);
+}
+
 int main()
 {
 	int i;
 	char *p = "Tera miy\n";
 	char *p2 = "jhnkjhjk\n";
 	mit(const char *) p3 = "jml";
-
+	sdmi("one", "two", "three");
 	printf("char %d\n%s", sizeof(s), p, p2);
 	printf("char + int %d\n", sizeof(s1));
 	printf("de %d %d\n", &de[1] , ptr);
@@ -69,10 +78,13 @@ int main()
 	//mix1(0);
 	*(&(p2)) = 1, mix2();
 	i = (size_tt)( (int*)p - 0) + 1;
-	if (p > de){
-	 	int z;
-	  	z = 0;	
-		return 1;
+	if (p > de || 1){
+	 	int z = 448;
+	  	printf("z %d\n", z);	
+	}
+	if (1) {
+		int y = 987;
+	  	printf("y %d\n", y);	
 	}
 	//printf("%s\n", p2);
 	//

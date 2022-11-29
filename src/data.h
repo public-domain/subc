@@ -46,6 +46,7 @@ extern_ int	Globs;
 extern_ int	Locs;
 
 extern_ int	Thisfn;
+extern_ int	Thislsize;
 
 /* name list */
 extern_ char	Nlist[POOLSIZE];
@@ -61,6 +62,7 @@ extern_ int	Retlab;
 extern_ int	LIaddr[MAXLOCINIT];
 extern_ int	LIval[MAXLOCINIT];
 extern_ int	LItype[MAXLOCINIT];
+extern_ int	LIini[MAXLOCINIT];
 extern_ int	Nli;
 
 /* synthesizer operand queue */
