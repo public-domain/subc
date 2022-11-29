@@ -322,11 +322,11 @@ int pointerto(int prim) {
  *	| * * IDENT
  *	| * IDENT [ constexpr ]
  *	| IDENT [ constexpr ]
- *	| IDENT = constexpr
+ *	| IDENT = ldlabexpr
  *	| IDENT [ ] = initlist
  *	| IDENT pmtrdecl
  *	| IDENT [ ]
- *	| * IDENT [ ]
+ *	
  *	| ( * IDENT ) ( )
  */
 
@@ -374,20 +374,7 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 		if (CTYPE == scls)
 			error(unsupp, NULL);
 		Token = scan();
-		if (ptrtype(*pprim)) {
-			*pval = ldlabexpr(pinit, poff);
-		} else {
-			*pval = ldlabexpr(pinit, poff);
-			if (PU8 == *pprim)
-				*pval &= 0xff;
-			else if (PU16 == *pprim)
-				*pval &= 0xffff;
-			else if (PU32 == *pprim)
-				*pval &= 0xffffffff;
-			if (*pval && !inttype(*pprim))
-				error("non-zero pointer initialization", NULL);
-			*pinit = OP_LIT;
-		}
+		*pval = ldlabexpr(pinit, poff);
 	}
 	else if (!pmtr && LPAREN == Token) {
 		if (CTYPE == scls)
@@ -978,10 +965,17 @@ void top(void) {
 		}
 		decl(clss, prim, 0);
 		break;
-	case CHAR:
-	case INT:
 	case LONG:
 	case SHORT:
+		prim = primtype(Token, NULL);
+		Token = scan();
+		if (INT == Token) {
+			Token = scan();
+		}
+		decl(clss, prim, 0);
+		break;
+	case CHAR:
+	case INT:
 	case VOID:
 	case DOUBLE:
 	case FLOAT:

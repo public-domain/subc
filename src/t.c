@@ -56,12 +56,12 @@ int mix2() {
 #define mix(a,b) mix1(a)
 #define mit(a) a
 
-void sdmi(char *a, char *b, char *c)
+void sdmi(char a, char *b, char *c)
 {
-	char *d = a;
+	char d = a;
 	char *e = b;
 	char *f = c;
-	printf("SDMI %s %s %s\n", d, e, f);
+	printf("SDMI %d %s %s\n", d, e, f);
 }
 
 int main()
@@ -70,7 +70,7 @@ int main()
 	char *p = "Tera miy\n";
 	char *p2 = "jhnkjhjk\n";
 	mit(const char *) p3 = "jml";
-	sdmi("one", "two", "three");
+	sdmi(303, "two", "three");
 	printf("char %d\n%s", sizeof(s), p, p2);
 	printf("char + int %d\n", sizeof(s1));
 	printf("de %d %d\n", &de[1] , ptr);
