@@ -8,7 +8,7 @@
 #include "decl.h"
 
 static int declarator(int arg, int scls, char *name, int *pprim, int *psize,
-			int *pval, int *pinit, int *off);
+			int *pval, int *pinit, int *off, int lab);
 
 /*
  * enumdecl := { enumlist } ;
@@ -60,20 +60,39 @@ static void enumdecl(int glob) {
  *	| constexpr , const_list
  */
 
-static int initlist(char *name, int prim) {
+static void locstatname(char *nbuf, char *name) {
+	int	l;
+	strncpy(nbuf, Names[Thisfn], NAMELEN);
+	nbuf[NAMELEN] = 0;
+	l = strlen(nbuf);
+	strncpy(nbuf + l, "__", NAMELEN -l);
+	nbuf[NAMELEN] = 0;
+	l = strlen(nbuf);
+	strncpy(nbuf + l, name, NAMELEN -l);
+	nbuf[NAMELEN] = 0;
+}
+
+static int initlist(char *name, int prim, int scls, int lab) {
 	int	n = 0, v;
 	char	buf[30];
-
+	char    nbuf[NAMELEN+1];
+	int 	val;
 	gendata();
-	genname(name);
+	if (CAUTO == scls) {
+		locstatname(nbuf, name);
+		genloclabel(lab);
+	} else {
+		genname(name);
+	}
 	if (STRLIT == Token) {
 		if (PUCHAR != prim)
 			error("initializer type mismatch: %s", name);
 		gendefs(Text, Value);
 		gendefb(0);
 		genalign(Value-1);
+		val = Value;
 		Token = scan();
-		return Value-1;
+		return 0;
 	}
 	lbrace();
 	while (Token != RBRACE) {
@@ -184,6 +203,9 @@ static int pmtrdecls(void) {
 	addr = 2*BPW;
 	for (;;) {
 		utype = 0;
+		if (CONST == Token) {
+			Token = scan();
+		}
 		if (na > 0 && ELLIPSIS == Token) {
 			Token = scan();
 			na = -(na + 1);
@@ -199,14 +221,11 @@ static int pmtrdecls(void) {
 				VOID == Token || UNSIGNED == Token ||
 				SIGNED == Token || LONG == Token ||
 				DOUBLE == Token || FLOAT == Token ||
-				SHORT == Token || CONST == Token ||
+				SHORT == Token || 
 				STRUCT == Token || UNION == Token ||
 				(IDENT == Token && utype != 0)
 			) {
 				name[0] = 0;
-				if (CONST == Token) {
-					Token = scan();
-				}
 				if (UNSIGNED == Token) {
 					Token = scan();
 					if (CHAR == Token || SHORT == Token ||
@@ -256,7 +275,7 @@ static int pmtrdecls(void) {
 		}
 		size = 1;
 		type = declarator(1, CAUTO, name, &prim, &size, &dummy,
-				&dummy, &dummy);
+				&dummy, &dummy, 0);
 		if ((utype && TARRAY == Types[utype]) || TARRAY == type) {
 			prim = pointerto(prim);
 			type = TVARIABLE;
@@ -331,7 +350,7 @@ int pointerto(int prim) {
  */
 
 static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
-			int *pval, int *pinit, int *poff)
+			int *pval, int *pinit, int *poff, int lab)
 {
 	int	type = TVARIABLE;
 	int	ptrptr = 0;
@@ -405,13 +424,10 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 							" pointer array not"
 							" supported",
 							NULL);
-					*psize = initlist(name, *pprim);
-					if (CAUTO == scls)
-						error("initialization of"
-							" local arrays"
-							" not supported: %s",
-							name);
+					*psize = initlist(name, *pprim, scls, lab);
 					*pinit = OP_LIT;
+					if (CAUTO == scls)
+						*pinit = 0;
 				}
 				else if (CEXTERN != scls) {
 					error("automatically-sized array"
@@ -476,6 +492,7 @@ int localdecls(int addr) {
 	int	stat, extn;
 	int	pbase, rsize;
 	int	sig, unsig, off;
+	int	lab;
 
 	utype = 0;
 	while ( AUTO == Token || EXTERN == Token || REGISTER == Token ||
@@ -574,15 +591,18 @@ int localdecls(int addr) {
 			prim = pbase;
 			if (eofcheck()) return 0;
 			size = 1;
-			ini = val = 0;
+			lab = ini = val = 0;
+			if (stat) {
+				lab = label();
+			}
 			type = declarator(0, CAUTO, name, &prim, &size,
-					&val, &ini, &off);
+					&val, &ini, &off, lab);
 			type = upgrade_array(utype, type, &size);
 			rsize = objsize(prim, type, size);
 			rsize = (rsize + INTSIZE-1) / INTSIZE * INTSIZE;
 			if (stat) {
 				addloc(name, prim, type, CLSTATC, size,
-					label(), val);
+					lab, val);
 			}
 			else if (extn) {
 				addloc(name, prim, type, CEXTERN, size,
@@ -660,7 +680,7 @@ void decl(int clss, int prim, int utype) {
 		val = 0;
 		init = 0;
 		type = declarator(0, clss, name, &prim, &size, 
-				&val, &init, &off);
+				&val, &init, &off, 0);
 		type = upgrade_array(utype, type, &size);
 		if (TFUNCTION == type) {
 			clss = clss == CSTATIC? CSPROTO: CEXTERN;
@@ -799,7 +819,7 @@ void structdecl(int clss, int uniondecl) {
 			if (eofcheck()) return;
 			prim = base;
 			type = declarator(1, CMEMBER, name, &prim, &size,
-						&dummy, &dummy, &dummy);
+						&dummy, &dummy, &dummy, 0);
 			align = size;
 			size = objsize(prim, type, size);
 			if (align > 1) {

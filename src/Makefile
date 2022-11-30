@@ -41,7 +41,9 @@ RANLIB=	ranlib
 all:	scc0 crt0 ncrt0 lib t
 	
 t: scc0 lib
+	rm -f t.s
 	./scc0 -o t.exe t.c
+	./scc0 -S t.c
 	./t.exe
 
 scc:	scc1 $(SRC)

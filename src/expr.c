@@ -220,7 +220,7 @@ static node *indirection(node *n, int *lv) {
 
 	n = rvalue(n, lv);
 	if (VOIDPTR == lv[LVPRIM])
-		error("dereferencing void pointer", NULL);
+		error("#ERR23 dereferencing void pointer", NULL);
 	if ((p = deref(lv[LVPRIM])) < 0) {
 		if (lv[LVSYM])
 			error("#ERR019 indirection through non-pointer: %s",

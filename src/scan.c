@@ -41,11 +41,11 @@ static int hexchar(void) {
 		n = n * 16 + h;
 		f = 1;
 	}
-	putback(c);
 	if (!f)
 		error("missing digits after '\\x'", NULL);
 	if (n > 255)
 		error("value out of range after '\\x'", NULL);
+	putback(c);
 	return n;
 }
 
@@ -109,7 +109,9 @@ static int scanint(int c) {
 		val = val * radix + k;
 		c = next();
 	}
-	putback(c);
+	if (c != 'L') {
+		putback(c);
+	}
 	Text[i] = 0;
 	return val;
 }
@@ -551,9 +553,6 @@ static int scanpp(void) {
 			}
 			else if (isalpha(c) || '_' == c) {
 				Value = scanident(c, Text, TEXTLEN);
-				if (!strcmp(Text, "ox1")) {
-					exit(-1);
-				}
 				if (Expandmac && macro(Text))
 					break;
 				if ((t = keyword(Text)) != 0)
@@ -561,7 +560,7 @@ static int scanpp(void) {
 				return IDENT;
 			}
 			else {
-				scnerror("funny input character: %s", c);
+				scnerror("#ERR024 funny input character: %s", c);
 				break;
 			}
 		}

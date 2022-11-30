@@ -71,6 +71,7 @@ void	genldlab(int id);
 void	genlit(int v);
 void	genln(char *s);
 void	genlocinit(int start);
+void	genloclabel(int id);
 void	genlognot(void);
 void	genmod(int swap);
 void	genmul(void);

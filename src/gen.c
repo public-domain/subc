@@ -134,6 +134,11 @@ void genname(char *name) {
 	cgname(gsym(name));
 }
 
+void genloclabel(int id)
+{
+	cgname(labname(id));
+}
+
 void genpublic(char *name) {
 	cgpublic(gsym(name));
 }
@@ -616,6 +621,8 @@ void genlocinit(int start) {
 		if (OP_IDENT == LIini[i]) { 
 			cgldlw(Vals[LIval[i]]);
 			cgstorlw(LIaddr[i]);
+		} else if (OP_ASSIGN == LIini[i]) {
+		       fprintf(stderr, "JML locini %s\n", Names[y]);	
 		} else if (ptrtype1(LItype[i]) && LIval[i] != 0) {
 			cgldsa(LIval[i]);
 			cgstorlw(LIaddr[i]);

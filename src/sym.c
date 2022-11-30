@@ -271,10 +271,11 @@ static void defloc(int prim, int type, int size, int val, int init) {
 		else
 			genbss(labname(val), objsize(prim, TVARIABLE, size),1);
 	}
+	/* FIXME other kind of prime */
 	else if (PUCHAR == prim) {
-		if (TARRAY == type)
-			genbss(labname(val), size, 1);
-		else {
+		if (TARRAY == type) {
+			if (size) genbss(labname(val), size, 1);
+		} else {
 			gendefb(init);
 			genalign(1);
 		}
