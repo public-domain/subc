@@ -92,7 +92,7 @@ static int initlist(char *name, int prim, int scls, int lab) {
 		genalign(Value-1);
 		val = Value;
 		Token = scan();
-		return 0;
+		return -val;
 	}
 	lbrace();
 	while (Token != RBRACE) {
@@ -599,6 +599,7 @@ int localdecls(int addr) {
 					&val, &ini, &off, lab);
 			type = upgrade_array(utype, type, &size);
 			rsize = objsize(prim, type, size);
+			if (rsize < 0) rsize = -rsize;
 			rsize = (rsize + INTSIZE-1) / INTSIZE * INTSIZE;
 			if (stat) {
 				addloc(name, prim, type, CLSTATC, size,

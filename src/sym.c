@@ -274,7 +274,7 @@ static void defloc(int prim, int type, int size, int val, int init) {
 	/* FIXME other kind of prime */
 	else if (PUCHAR == prim) {
 		if (TARRAY == type) {
-			if (size) genbss(labname(val), size, 1);
+			if (size > 0) genbss(labname(val), size, 1);
 		} else {
 			gendefb(init);
 			genalign(1);
@@ -302,12 +302,16 @@ int addloc(char *name, int prim, int type, int scls, int size, int val,
 	if (findloc(name))
 		error("redefinition of: %s", name);
  	y = newloc();
-	if (CLSTATC == scls) defloc(prim, type, size, val, init);
+	if (CLSTATC == scls) {
+		defloc(prim, type, size, val, init);
+	} else if (size < 0) {
+		genloccopy(val, init, -size);
+	}
 	Names[y] = locname(name);
 	Prims[y] = prim;
 	Types[y] = type;
 	Stcls[y] = scls;
-	Sizes[y] = size;
+	Sizes[y] = size > 0? size: -size;
 	Vals[y] = val;
 	return y;
 }

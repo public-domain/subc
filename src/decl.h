@@ -70,6 +70,7 @@ void	genlab(int id);
 void	genldlab(int id);
 void	genlit(int v);
 void	genln(char *s);
+void	genloccopy(int stk, int src, int size);
 void	genlocinit(int start);
 void	genloclabel(int id);
 void	genlognot(void);

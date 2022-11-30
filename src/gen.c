@@ -632,6 +632,25 @@ void genlocinit(int start) {
 	}
 }
 
+
+/* FIXME: copy of initializer must be improved */
+void genloccopy(int stk, int src, int size)
+{
+	gentext();
+	cgldga(labname(src));
+	while (size > 0) {
+		cgpush();
+		cgindb();
+		cgstorlb(stk);
+		cgpop2();
+		cglit(1);
+		cgadd();
+		stk++;
+		size--;
+	}
+}
+
+
 /* data definitions */
 
 void genbss(char *name, int len, int statc) {
