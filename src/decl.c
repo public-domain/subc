@@ -173,7 +173,7 @@ int usertype(char *s) {
 	int	y;
 
 	if ((y = findsym(s)) == 0) return 0;
-	return CTYPE == Stcls[y]? y: 0;
+	return CTYPE == Stcls[y]? (y | PTYPE): 0;
 }
 
 /*
@@ -259,7 +259,7 @@ static int pmtrdecls(void) {
 						Token = scan();
 					}
 				} else {
-					prim = utype? Prims[utype]:
+					prim = utype? Prims[utype & ~STCMASK]:
 						primtype(Token, NULL);
 					Token = scan();
 				}
@@ -276,7 +276,7 @@ static int pmtrdecls(void) {
 		size = 1;
 		type = declarator(1, CAUTO, name, &prim, &size, &dummy,
 				&dummy, &dummy, 0);
-		if ((utype && TARRAY == Types[utype]) || TARRAY == type) {
+		if ((utype && TARRAY == Types[utype & ~STCMASK]) || TARRAY == type) {
 			prim = pointerto(prim);
 			type = TVARIABLE;
 		}
@@ -293,6 +293,7 @@ static int pmtrdecls(void) {
 
 int pointerto(int prim) {
 	int	y;
+	char	name[NAMELEN + 1];
 
 	if (U8PP == prim || I8PP == prim || 
 	    U16PP == prim || I16PP == prim ||
@@ -301,15 +302,25 @@ int pointerto(int prim) {
 	    F32PP == prim || F64PP == prim ||
 	    VOIDPP == prim ||
 	    FUNPTR == prim ||
-	    (prim & STCMASK) == STCPP || (prim & STCMASK) == UNIPP
-	)
-		error("too many levels of indirection", NULL);
+	    (prim & STCMASK) == STCPP || (prim & STCMASK) == UNIPP ||
+	    (prim & STCMASK) == TYPEPP
+	) 
+	{
+		sprintf(name, "*%d", prim);
+		y = findglob(name);
+		if (y > 0) return y;
+		y = addglob(name, 0, TTYPEDEF, CTYPE, PTRSIZE, 0, NULL, 0, 0);
+		// JML error("#ERR025 too many levels of indirection", NULL);
+		return y;
+	}
 	y = prim & ~STCMASK;
 	switch (prim & STCMASK) {
 	case PSTRUCT:	return STCPTR | y;
 	case STCPTR:	return STCPP | y;
 	case PUNION:	return UNIPTR | y;
 	case UNIPTR:	return UNIPP | y;
+	case PTYPE:	return TYPEPTR | y;
+	case TYPEPTR:	return TYPEPP | y;
 	}
 	return PI8 == prim? I8PTR:
 		I8PTR == prim? I8PP:
@@ -360,7 +371,7 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 	if (STAR == Token) {
 		Token = scan();
 		*pprim = pointerto(*pprim);
-		if (STAR == Token) {
+		while (STAR == Token) {
 			Token = scan();
 			*pprim = pointerto(*pprim);
 			ptrptr = 1;
@@ -452,10 +463,11 @@ static int declarator(int pmtr, int scls, char *name, int *pprim, int *psize,
 }
 
 int upgrade_array(int utype, int type, int *size) {
-	if (utype && TARRAY == Types[utype]) {
+	if (utype && TARRAY == Types[utype & ~STCMASK]) {
 		if (TARRAY == type)
 			error("unsupported typedef (array of array)", NULL);
-		*size = *size? *size * Sizes[utype]: Sizes[utype];
+		*size = *size? *size * Sizes[utype & ~STCMASK]: 
+				Sizes[utype & ~STCMASK];
 		return TARRAY;
 	}
 	return type;
@@ -544,7 +556,7 @@ int localdecls(int addr) {
 			} else if (SIGNED == Token) {
 				sig = 1;
 			} else if (utype) {
-				prim = Prims[utype];
+				prim = Prims[utype & ~STCMASK];
 			}
 			else
 				prim = PINT;
@@ -553,7 +565,7 @@ int localdecls(int addr) {
 		} else if (SIGNED == Token) {
 			sig = 1;
 		} else if (utype) {
-			prim = Prims[utype];
+			prim = Prims[utype & ~STCMASK];
 			Token = scan();
 		} else if (LONG == Token || SHORT == Token) {
 			prim = primtype(Token, NULL);
@@ -812,7 +824,8 @@ void structdecl(int clss, int uniondecl) {
 			}
 	
 		} else {
-			base = utype? Prims[utype]: primtype(Token, NULL);
+			base = utype? Prims[utype & ~STCMASK]: 
+				primtype(Token, NULL);
 			Token = scan();
 		}
 		size = 0;
@@ -911,7 +924,7 @@ void typedecl(void) {
 	}
 	else if ((utype = usertype(Text)) != 0) {
 		Token = scan();
-		decl(CTYPE, Prims[utype], utype);
+		decl(CTYPE, Prims[utype & ~STCMASK], utype);
 	}
 	else {
 		prim = primtype(Token, NULL);
@@ -1007,7 +1020,7 @@ void top(void) {
 	case IDENT:
 		if ((utype = usertype(Text)) != 0) {
 			Token = scan();
-			decl(clss, Prims[utype], utype);
+			decl(clss, Prims[utype & ~STCMASK], utype);
 		}
 		else
 			decl(clss, PINT, 0);

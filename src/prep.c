@@ -136,7 +136,7 @@ static char *expandbody(char *s, int na) {
 	if (ni < i) {
 		replace(na, ni, buf, TEXTLEN);
 	}
-	/*printf("JML XPND: %s\n", buf); */
+	/*printf("JML XPND: %s\n", buf);*/ 
 	return buf;
 }
 

@@ -20,14 +20,16 @@ static void stmt(void);
  */
 
 void compound(int lbr) {
-	int lsize, start;
+	int lsize, nli, locs, tlsize;;
 	if (lbr) Token = scan();
-	start = Nli;
+	nli = Nli;
+	locs = Locs;
+	tlsize = Thislsize;
 	lsize = localdecls(Thislsize);
-	if (start != Nli) {
+	if (nli != Nli) {
 		gentext();
 		genaligntext();
-		genlocinit(start);
+		genlocinit(nli);
 	}
 	Thislsize = lsize;
 	while (RBRACE != Token) {
@@ -35,6 +37,11 @@ void compound(int lbr) {
 		stmt();
 	}
 	Token = scan();
+	Locs = locs;
+	Nli = nli;
+	if (Thislsize > tlsize) {
+		Thislsize = tlsize; // Thislsize is negative
+	}
 }
 
 static void pushbrk(int id) {

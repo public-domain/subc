@@ -400,7 +400,9 @@ static node *comp_size(void) {
                 (IDENT == Token && (utype = usertype(Text)) != 0)
 	) {
 		if (utype) {
-			k = objsize(Prims[utype], Types[utype], Sizes[utype]);
+			k = objsize(Prims[utype & ~STCMASK], 
+					Types[utype & ~STCMASK], 
+					Sizes[utype & ~STCMASK]);
 		}
 		else {
 			if (SIGNED == Token || UNSIGNED == Token) {
@@ -605,7 +607,7 @@ static node *cast(int *lv) {
 			Token = scan();
 		} else if (IDENT == Token && (utype = usertype(Text)) != 0) { 
 			Token = scan();
-			t = Prims[utype];
+			t = Prims[utype & ~STCMASK];
 		} else if (t == 0) {
 			reject();
 			Token = LPAREN;
@@ -623,7 +625,7 @@ static node *cast(int *lv) {
 		else if (STAR == Token) {
 			t = pointerto(t);
 			Token = scan();
-			if (STAR == Token) {
+			while (STAR == Token) {
 				t = pointerto(t);
 				Token = scan();
 			}

@@ -252,7 +252,11 @@ int addglob(char *name, int prim, int type, int scls, int size, int val,
 	}
 	if (CPUBLIC == scls || CSTATIC == scls)
 		defglob(name, prim, type, size, val, scls, init, off);
-	Prims[y] = prim;
+	if (TTYPEDEF == type) {
+		Prims[y] = y;
+	} else {
+		Prims[y] = prim;
+	}
 	Types[y] = type;
 	Stcls[y] = scls;
 	Sizes[y] = size;
@@ -361,7 +365,9 @@ int objsize(int prim, int type, int size) {
 		k = PTRSIZE;
 	else if (UNIPTR == sp || UNIPP == sp)
 		k = PTRSIZE;
-	else if (PSTRUCT == sp || PUNION == sp)
+	else if (TYPEPTR == sp || TYPEPP == sp)
+		k = PTRSIZE;
+	else if (PSTRUCT == sp || PUNION == sp || PTYPE == sp)
 		k = Sizes[prim & ~STCMASK];
 	else if (FUNPTR == prim)
 		k = PTRSIZE;
