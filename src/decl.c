@@ -309,9 +309,8 @@ int pointerto(int prim) {
 		sprintf(name, "*%d", prim);
 		y = findglob(name);
 		if (y > 0) return y;
-		y = addglob(name, 0, TTYPEDEF, CTYPE, PTRSIZE, 0, NULL, 0, 0);
-		// JML error("#ERR025 too many levels of indirection", NULL);
-		return y;
+		y = addglob(name, 0, TTYPEDEF, CTYPE, PTRSIZE, prim, NULL, 0, 0);
+		return y | TYPEPTR;
 	}
 	y = prim & ~STCMASK;
 	switch (prim & STCMASK) {

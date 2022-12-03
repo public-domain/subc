@@ -86,9 +86,35 @@ static int scanch(void) {
 	}
 }
 
-static int scanint(int c) {
+/* FIXME parse float */
+static int scanflt(int i, int c, int val) {
+	int k, point, n;
+	while ((k = chrpos("0123456789", c)) >= 0) {
+		Text[i++] = c;
+		val = val * 10 + k;
+		c = next();
+	}
+	n = 1;
+	point = 0;
+	if ('.' == c) {
+		Text[i++] = c;
+		c = next();
+	}
+	while ((k = chrpos("0123456789", c)) >= 0) {
+		Text[i++] = c;
+		point = point * 10 + k;
+		n *= 10;
+		c = next();
+	}
+	putback(c);
+	Text[i] = 0;
+	return val;
+}
+
+static int scanint(int c, int *r) {
 	int	val, radix, k, i = 0;
 
+	*r = INTLIT;
 	val = 0;
 	radix = 10;
 	if ('0' == c) {
@@ -102,12 +128,20 @@ static int scanint(int c) {
 			radix = 8;
 		}
 	}
+	if ('.' == c) {
+		*r = FLOATLIT;
+		return scanflt(i, c, 0);
+	}
 	while ((k = chrpos("0123456789abcdef", tolower(c))) >= 0) {
 		Text[i++] = c;
 		if (k >= radix)
 			scnerror("invalid digit in integer literal: %s", c);
 		val = val * radix + k;
 		c = next();
+	}
+	if ('.' == c) {
+		*r = FLOATLIT;
+		return scanflt(i, c, val);
 	}
 	if (c != 'L') {
 		putback(c);
@@ -324,7 +358,7 @@ static int macro(char *name) {
 }
 
 static int scanpp(void) {
-	int	c, t, y;
+	int	c, t, y, r;
 
 	if (Rejected != -1) {
 		t = Rejected;
@@ -533,7 +567,8 @@ static int scanpp(void) {
 			error("unknown preprocessor command: %s", Text);
 			return IDENT;
 		case '.':
-			if ((c = next()) == '.') {
+			c = next();
+			if (c == '.') {
 				Text[1] = Text[2] = '.';
 				Text[3] = 0;
 				if ((c = next()) == '.')
@@ -541,6 +576,10 @@ static int scanpp(void) {
 				putback(c);
 				error("incomplete '...'", NULL);
 				return ELLIPSIS;
+			} else if (isdigit(c)) {
+				putback(c);
+				Value = scanflt(0, '.', 0);
+				return FLOATLIT;
 			}
 			putback(c);
 			return DOT;
@@ -548,8 +587,8 @@ static int scanpp(void) {
 			return XEOL;
 		default:
 			if (isdigit(c)) {
-				Value = scanint(c);
-				return INTLIT;
+				Value = scanint(c, &r);
+				return r;
 			}
 			else if (isalpha(c) || '_' == c) {
 				Value = scanident(c, Text, TEXTLEN);

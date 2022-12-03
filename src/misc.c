@@ -122,6 +122,7 @@ int ptrtype1(int p)
                SHORTPTR == p ||
                USHORTPTR == p ||
                STCPTR == y ||
+               TYPEPTR == y ||
                UNIPTR == y ||
                VOIDPTR == p ||
 	       FUNPTR == p;
@@ -141,6 +142,7 @@ int ptrtype2(int p)
                USHORTPP == p ||
                VOIDPP == p ||
                STCPP == y ||
+               TYPEPP == y ||
                UNIPP == y;
 }
 

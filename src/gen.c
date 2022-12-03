@@ -245,6 +245,7 @@ static int ptr(int p) {
 		LONGPTR == p || LONGPP == p ||
 		VOIDPTR == p || VOIDPP == p ||
 		STCPTR == sp || STCPP == sp ||
+		TYPEPTR == sp || TYPEPP == sp ||
 		UNIPTR == sp || UNIPP == sp ||
 		FUNPTR == p;
 }
@@ -261,6 +262,7 @@ static int needscale(int p) {
 		ULONGPTR == p || ULONGPP == p || 
 		CHARPP == p || UCHARPP == p || VOIDPP == p ||
 		STCPTR == sp || STCPP == sp || 
+		TYPEPTR == sp || TYPEPP == sp || 
 		UNIPTR == sp || UNIPP == sp;
 	if (r) {
 		r = objsize(deref(p), TVARIABLE, 1);

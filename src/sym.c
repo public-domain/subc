@@ -386,6 +386,9 @@ static char *typename(int p) {
 	case PUNION:	return "UNION";
 	case UNIPTR:	return "UNIO*";
 	case UNIPP:	return "UNIO**";
+	case PTYPE:	return "unknown";
+	case TYPEPTR:	return "TYPE*";
+	case TYPEPP:	return "TYPE**";
 	}
 	return	PINT    == p? "INT":
 		PUCHAR  == p? "UCHAR":

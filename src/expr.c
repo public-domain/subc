@@ -90,6 +90,11 @@ static node *primary(int *lv) {
 		Token = scan();
 		lv[LVPRIM] = PINT;
 		return n;
+	case FLOATLIT: /* FIXME */
+		n = mkleaf(OP_LIT, Value);
+		Token = scan();
+		lv[LVPRIM] = PDOUBLE;
+		return n;
 	case STRLIT:
 		gendata();
 		lab = label();
@@ -211,6 +216,11 @@ int deref(int p) {
 	case STCPTR:	return PSTRUCT | y;
 	case UNIPP:	return UNIPTR | y;
 	case UNIPTR:	return PUNION | y;
+	case TYPEPP:	return TYPEPTR | y;
+	}
+	fprintf(stderr, "JML %x\n", p);
+	if ((p & STCMASK) == TYPEPTR) {
+		return Vals[y]; 
 	}
 	return -1;
 }
@@ -308,6 +318,7 @@ static node *postfix(int *lv) {
 					UINTPTR == p ||
 					UCHARPTR == p || VOIDPTR == p ||
 					STCPTR == (p & STCMASK) ||
+					TYPEPTR == (p & STCMASK) ||
 					UNIPTR == (p & STCMASK)
 				) {
 					n2 = mkunop(OP_SCALE, n2);
