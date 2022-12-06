@@ -441,7 +441,7 @@ static int p_exprlist(int lhs, int minprec)
 		case LESS: lhs = lhs < rhs; break;
 		case LTEQ: lhs = lhs <= rhs; break;
 		default:
-			error("'#if' unknown '%s'", Text);
+			error("#ERR030 '#if' unknown '%s' token", Text);
 		}
 	}
 	return lhs;
@@ -512,7 +512,7 @@ static int p_primary()
 		error("'#if' expression is incomplete", NULL);
 		return 0;
 	default:
-		error("'#if' unknown '%s'", Text);		
+		error("#ERR031 '#if' unknown '%s' token", Text);		
 		Token = scanraw();
 		return 0;
 	}	
@@ -541,6 +541,7 @@ static void p_if(int incstk) {
 }
 
 static void p_elif(void) {
+	//fprintf(stderr, "JML PIF elif %d\n", Isp);
 	if (!Isp)
 		error("'#elif' without matching '#if'", NULL);
 	else if (frozen(2))
@@ -572,6 +573,7 @@ static void p_else(void) {
 }
 
 static void endif(void) {
+	//fprintf(stderr, "JML PIF endif %d\n", Isp);
 	if (!Isp)
 		error("'#endif' without matching '#if'", NULL);
 	else
@@ -622,8 +624,9 @@ int frozen(int depth) {
 }
 
 void preproc(void) {
+	//fprintf(stderr, "JML junk %s\n", Text);
 	putback('#');
-	Token = scanraw();
+	Token = scanpproc();
 	if (	frozen(1) &&
 		P_IFDEF != Token && P_IFNDEF != Token &&
 		P_ELSE != Token && P_ENDIF != Token &&
@@ -632,6 +635,7 @@ void preproc(void) {
 		junkln();
 		return;
 	}
+//	fprintf(stderr, "JML jkjk %s\n", Text);
 	switch (Token) {
 	case P_DEFINE:	defmac(); break;
 	case P_UNDEF:	undef(); break;
@@ -645,7 +649,8 @@ void preproc(void) {
 	case P_ERROR:	pperror(); break;
 	case P_LINE:	setline(); break;
 	case P_PRAGMA:	junkln(); break;
-	default:	junkln(); break;
+	default:	
+			junkln(); 
 			break;
 	}
 }

@@ -11,6 +11,7 @@ void init(void) {
 	char *defines;
 
 	Line = 1;
+	Newl = 1;
 	Putback = '\n';
 	Rejected = -1;
 	Errors = 0;

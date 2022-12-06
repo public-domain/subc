@@ -184,60 +184,95 @@ static int scanident(int c, char *buf, int lim) {
 	return i;
 }
 
-int skip(void) {
-	int	c, p, nl, skipnl;
-
-	c = next();
-	nl = 0;
-	skipnl = 0;
-	for (;;) {
-		if (EOF == c) {
-			strcpy(Text, "<EOF>");
-			return EOF;
+static int skipundef(int c)
+{
+	if (frozen(1) && Expandmac) {
+		while (EOF != c && '\n' != c && '#' != c && '\r' != c
+				&& '*' != c && '/' != c && '\\' != c) 
+		{
+			c = next();
 		}
+	}
+	return c;
+}
+
+static int skipspace(int *cl, int *nl, int *skipnl)
+{
+	int c, r;
+	c = *cl;
+	r = 0;
+	for (;;) {
+		//fprintf(stderr, "JML %c ...\n", c);
 		while (' ' == c || '\t' == c || '\n' == c ||
 			'\r' == c || '\f' == c
 		) {
 			if ('\n' == c) {
-				if (skipnl) {
-					skipnl = 0;
+				if (*skipnl) {
+					*skipnl = 0;
 				} else {
 					if (!Expandmac) {
-						return  ' ';	
+						*cl = ' ';
+						return  1;	
 					}
 				}
-				nl = 1;
+				*nl = 1;
 			}
 			c = next();
+			r = 1;
 		}
+		// JML
 		if ('\\' == c) {
 			c = next();
 			if (c == '\n' || c == '\r') { 
-				skipnl = 1;
+				*skipnl = 1;
 				continue;
 			} else {
 				putback(c);
 				c = '\\';
 			}
 		}
+		break;
+	}
+	*cl = c;
+	return r;
+}
 
-		if (nl && c == '#') {
-			preproc();
-			c = next();
-			continue;
+static int skipcom(int *cl, int *nl)
+{
+	int p, c, r;
+	c = *cl;
+	r = 0;
+	while (' ' == c || '\t' == c || '\n' == c ||
+			'\r' == c || '\f' == c
+		) 
+	{
+		if ('\n' == c) {
+			*nl = 1;
+			if (!Expandmac) {
+				//fprintf(stderr, "JML EOOL \n");
+				*cl = ' ';
+				return  1;	
+			}
 		}
-		nl = 0;
-		if (c != '/')
-			break;
+		c = next();
+		r = 1;
+	}
+	
+	while (c == '/') {
 		c = next();
 		if (c != '*' && c != '/') {
 			putback(c);
 			c = '/';
 			break;
 		}
+		r = 1;
 		if (c == '/') {
 			while ((c = next()) != EOF) {
-				if (c == '\n') break;
+				if (c == '\n') {
+					*nl = 1;
+					c = next();
+					break;
+				}
 			}
                 }
                 else {
@@ -251,6 +286,59 @@ int skip(void) {
 			}
 		}
 	}
+	*cl = c;
+	return r;
+}
+
+
+int skip(void) {
+	int	c, p, skipnl;
+
+	c = next();
+	skipnl = 0;
+	for (;;) {
+		if (EOF == c) {
+			strcpy(Text, "<EOF>");
+			return EOF;
+		}
+		//fprintf(stderr, "JML '%c'\n", c);
+	
+		while (skipcom(&c, &Newl)) {
+			if (' ' == c && Newl && !Expandmac) {
+				Newl = 0;
+				return c;
+			}
+			if ('\\' == c) {
+				c = next();
+				if ('\r' == c) {
+					c = next();
+				}
+				if (c == '\n') {
+					c = next();	
+				} else {
+					putback(c);
+					c = '\\';
+				}
+			}
+		}
+		//fprintf(stderr, "JML PRiiE '%c' %d FR %d\n", c, nl, frozen(1));
+		if (Newl && c == '#') {
+			preproc();
+			Newl = 1;
+			c = next();
+		//fprintf(stderr, "JML PRE '%c' FR %d\n", c, frozen(1));
+			continue;
+		} else if (Newl && c == ' ') {
+			return c;
+		} else {
+			Newl = 0;
+		}
+		if (frozen(1) && Expandmac) {
+			c = next();
+			continue;
+		}
+		break;
+	};
 	return c;
 }
 
@@ -355,6 +443,30 @@ static int macro(char *name) {
 		return 0;
 	playmac(y);
 	return 1;
+}
+
+int scanpproc(void)
+{
+	int c, t, x;
+	Value = 0;
+	c = next();
+	memset(Text, 0, 4);
+	Text[0] = c;
+	switch (c) {
+	case '#':
+		Text[0] = '#';
+		x = Expandmac;
+		Expandmac = 0;
+		scanident(next(), &Text[1], TEXTLEN-1);
+		Expandmac = x;
+		if ((t = keyword(Text)) != 0)
+			return t;
+		error("unknown preprocessor command: %s", Text);
+		return IDENT;
+	default:
+		error("junk in preprocessor command: %s", Text);
+		return IDENT;
+	}
 }
 
 static int scanpp(void) {
@@ -550,10 +662,11 @@ static int scanpp(void) {
 			return XEOF;
 		case '\'':
 			Text[1] = Value = scanch();
-			if ((c = next()) != '\'')
+			if ((c = next()) != '\'') {
 				error(
 				 "expected '\\'' at end of char literal",
 					NULL);
+			}
 			Text[2] = '\'';
 			return INTLIT;
 		case '"':
@@ -611,9 +724,10 @@ int scan(void) {
 
 	do {
 		t = scanpp();
-		if (!Inclev && Isp && XEOF == t)
+	//fprintf(stderr, "JML TO '%s' %d %d %d\n", Text, Inclev, Isp, t);
+		if (!Inclev && Isp && XEOF == t) 
 			fatal("missing '#endif'");
-	} while (frozen(1));
+	} while (frozen(1) && Expandmac);
 	if (t == Syntoken)
 		Syntoken = 0;
 	return t;
@@ -621,13 +735,14 @@ int scan(void) {
 
 int scanraw(void) {
 	int	t, oisp;
-
+	int 	xpd;
 	oisp = Isp;
-	Isp = 0;
+	//Isp = 0;
+	xpd = Expandmac;
 	Expandmac = 0;
 	t = scan();
-	Expandmac = 1;
-	Isp = oisp;
+	Expandmac = xpd;
+	//Isp = oisp;
 	return t;
 }
 

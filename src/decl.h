@@ -146,6 +146,7 @@ void	reject(void);
 void	rexpr(void);
 void	rparen(void);
 int	scan(void);
+int	scanpproc(void);
 int	scanraw(void);
 void	scnerror(char *s, int c);
 void	semi(void);

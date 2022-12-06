@@ -18,9 +18,9 @@
 #define UINTPP U32PP
 #define UINTSIZE 4
 
-#define PCHAR PI8
-#define CHARPTR I8PTR
-#define CHARPP I8PP
+#define PCHAR PU8
+#define CHARPTR U8PTR
+#define CHARPP U8PP
 #define CHARSIZE 1
 
 #define PUCHAR PU8
@@ -28,15 +28,15 @@
 #define UCHARPP U8PP
 #define UCHARSIZE 1
 
-#define PSHORT PI16
-#define SHORTPTR I16PTR
-#define SHORTPP I16PP
-#define SHORTSIZE 2
+#define PSHORT PI32
+#define SHORTPTR I32PTR
+#define SHORTPP I32PP
+#define SHORTSIZE 4
 
-#define PUSHORT PU16
-#define USHORTPTR U16PTR
-#define USHORTPP U16PP
-#define USHORTSIZE 2
+#define PUSHORT PU32
+#define USHORTPTR U32PTR
+#define USHORTPP U32PP
+#define USHORTSIZE 4
 
 #define PLONG PI32
 #define LONGPTR I32PTR

@@ -13,6 +13,7 @@ extern_ int	Token;
 extern_ char	Text[TEXTLEN+1];
 extern_ int	Value;
 extern_ int	Line;
+extern_ int	Newl;
 extern_ int	Errors;
 extern_ int	Syntoken;
 extern_ int	Putback;
